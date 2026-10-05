@@ -82,6 +82,7 @@ details.howto li { margin-bottom: 4px; }
 .trainbar .mods { display: flex; flex-wrap: wrap; gap: 4px 14px; flex: 1 1 100%; font-size: 0.88rem; }
 .trainbar .mods label { font-weight: 400; display: flex; gap: 6px; align-items: center; }
 .trainbar .mods input { accent-color: var(--accent); width: 16px; height: 16px; }
+.btn.armed { background: var(--danger); border-color: var(--danger); color: #ffffff; }
 .btn.toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .trainbar select { border: 1.5px solid var(--ink); border-radius: 6px; padding: 5px 8px; background: var(--bg); color: var(--ink); min-width: 0; max-width: 100%; }
 
@@ -174,12 +175,15 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 .fx.heart { color: #ff6f91; }
 .fx.spark { color: #f2c230; }
 @keyframes floatup { 0% { transform: translate(0, 0) scale(0.4); opacity: 0; } 15% { opacity: 1; transform: translate(0, -6px) scale(1.1); } 100% { transform: translate(var(--dx), -56px) scale(0.8); opacity: 0; } }
+.slime.sad canvas.sprite { animation: none; transform: translateY(3px) scale(1.08, 0.88); transform-origin: 50% 100%; }
+.slime.wilting canvas.sprite { animation: wilt 1.1s ease-in-out both; transform-origin: 50% 100%; }
+@keyframes wilt { 0% { transform: translateY(0) scale(1, 1); } 45% { transform: translateY(4px) scale(1.14, 0.8); } 70% { transform: translateY(2px) scale(1.05, 0.92); } 100% { transform: translateY(3px) scale(1.08, 0.88); } }
 @keyframes shine { 0%, 100% { box-shadow: 0 0 0 2px var(--accent), 0 0 10px 2px var(--accent); } 50% { box-shadow: 0 0 0 3px var(--accent), 0 0 28px 10px var(--accent); } }
 @keyframes pop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animation: bob 1.4s steps(2) infinite; }
 .slime.dead canvas.sprite { animation: none; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-@media (prefers-reduced-motion: reduce) { canvas.sprite, .slime.fresh, .slime.fresh.winner, .slime.fresh.winner canvas.sprite { animation: none; } }
+@media (prefers-reduced-motion: reduce) { canvas.sprite, .slime.fresh, .slime.fresh.winner, .slime.fresh.winner canvas.sprite, .slime.wilting canvas.sprite { animation: none; } }
 
 .gens { display: flex; flex-direction: column; gap: 18px; }
 .gen-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -288,7 +292,7 @@ img { max-width: 100%; }
   <canvas id="home-cv" class="sprite home-slime" width="16" height="16" aria-hidden="true"></canvas>
   <p class="home-tag">Cruze slimes, descubra os genes escondidos e faça nascer o slime do dia.</p>
   <div class="home-btns">
-    <button class="bigbtn primary" id="go-daily" type="button">Desafio do dia<small id="daily-status">até 6 cruzamentos</small></button>
+    <button class="bigbtn primary" id="go-daily" type="button">Desafio do dia<small id="daily-status">até 8 cruzamentos</small></button>
     <button class="bigbtn" id="go-tut" type="button"><span class="badge" id="tut-badge">comece aqui</span>Tutorial<small>aprenda como funciona em dois minutos</small></button>
     <button class="bigbtn ghost" id="go-more" type="button">Mais opções<small>treino, outras versões e modos especiais</small></button>
   </div>
@@ -304,7 +308,7 @@ img { max-width: 100%; }
 
 <div id="view-game" hidden>
 <div class="pinbar" id="pinbar" hidden aria-hidden="true">
-  <div class="pin-in"><canvas id="pin-cv" class="sprite" width="16" height="16"></canvas><span class="pin-label">Alvo</span><span id="pin-name"></span></div>
+  <div class="pin-in"><canvas id="pin-cv" class="sprite" width="16" height="16"></canvas><span class="pin-label">Alvo</span><span id="pin-name"></span><span id="pin-geno" class="tgeno-tags"></span></div>
 </div>
 <div class="wrap">
   <header class="gamehead">
@@ -324,7 +328,7 @@ img { max-width: 100%; }
     <label for="variant">Versão</label>
     <select id="variant"></select>
     <button class="btn" id="btn-new" type="button">Novo desafio</button>
-    <p class="trainhelp">Cada versão acrescenta uma regra: <b>Roxo</b>, vermelho com azul dá roxo; <b>Transparente</b>, um gene esconde a cor; <b>Quatro genes</b>, entram as asas e 7 cruzamentos; <b>Roxo e transparente</b>, as duas juntas. Os modos especiais deixam mais difícil:</p>
+    <p class="trainhelp">Cada versão acrescenta uma regra: <b>Roxo</b>, vermelho com azul dá roxo; <b>Transparente</b>, um gene esconde a cor; <b>Quatro genes</b>, entram as asas e 9 cruzamentos; <b>Roxo e transparente</b>, as duas juntas. Os modos especiais deixam mais difícil:</p>
     <div class="mods" role="group" aria-label="Modos especiais">
       <label><input type="checkbox" id="mod-aging"> Envelhecer: cada slime cruza só 2 vezes</label>
       <label><input type="checkbox" id="mod-threat"> Ameaça: depois do 2º cruzamento, o ambiente mata os slimes de uma aparência (quem só esconde o traço escapa)</label>
@@ -351,7 +355,8 @@ img { max-width: 100%; }
     <summary>Como jogar</summary>
     <ul>
       <li>Toque em dois slimes e aperte <b>Cruzar</b>. Nascem sempre 4 filhotes, e o mesmo par dá sempre a mesma ninhada.</li>
-      <li>Os filhotes entram na árvore e podem ser cruzados também. Você tem 6 cruzamentos para fazer nascer o alvo.</li>
+      <li>Os filhotes entram na árvore e podem ser cruzados também. Você tem 8 cruzamentos para fazer nascer o alvo.</li>
+      <li>Todo desafio precisa de pelo menos 3 cruzamentos: o alvo junta traços de slimes diferentes, e isso leva duas gerações.</li>
       <li>O que o alvo pede sempre aparece à vista em algum dos slimes iniciais. Dá para resolver só deduzindo.</li>
       <li><b>Easy Mode</b> mostra as letras dos genes embaixo de cada slime e permite marcar palpites. <code>V_</code> quer dizer "tem um V, e a outra letra ainda não se sabe".</li>
     </ul>
@@ -376,6 +381,7 @@ img { max-width: 100%; }
     <div class="msg" id="msg" aria-live="polite">Toque em dois slimes para cruzar.</div>
     <div class="pips" id="pips" aria-label="Cruzamentos usados"></div>
     <button class="btn primary" id="btn-cross" type="button" disabled>Cruzar</button>
+    <button class="btn" id="btn-giveup" type="button">Ver resposta</button>
   </div>
 </div>
 </div>
@@ -384,15 +390,16 @@ img { max-width: 100%; }
 <script>
 /* ---------- versões ---------- */
 const AGE_LIMIT = 2;
+const MIN_PAR = 3; /* todo desafio precisa de pelo menos 3 cruzamentos: com 2, quase todo mundo vencia (ver simulação na nota do projeto) */
 const NO_MODS = { aging: false, threat: false, hard: false };
 let EASY = false;
 const EVENT_AT = 2;
 const VARIANTS = {
-  classico: { id: 'classico', nome: 'Clássico', max: 6 },
-  roxo: { id: 'roxo', nome: 'Roxo', max: 6, inc: true },
-  transparente: { id: 'transparente', nome: 'Transparente', max: 6, trans: true },
-  asas: { id: 'asas', nome: 'Quatro genes', max: 7, wings: true },
-  mistura: { id: 'mistura', nome: 'Roxo e transparente', max: 7, inc: true, trans: true },
+  classico: { id: 'classico', nome: 'Clássico', max: 8 },
+  roxo: { id: 'roxo', nome: 'Roxo', max: 8, inc: true },
+  transparente: { id: 'transparente', nome: 'Transparente', max: 8, trans: true },
+  asas: { id: 'asas', nome: 'Quatro genes', max: 9, wings: true },
+  mistura: { id: 'mistura', nome: 'Roxo e transparente', max: 9, inc: true, trans: true },
 };
 Object.values(VARIANTS).forEach(V => {
   V.genes = ['V', 'C', 'E'].concat(V.trans ? ['T'] : [], V.wings ? ['A'] : []);
@@ -566,7 +573,7 @@ function fairStart(V, starters, target) {
 function makePuzzle(V, seedStr, mods) {
   const n = V.genes.length;
   const valid = EVENTS.filter(e => (!e.inc || V.inc) && (!e.trans || V.trans) && (!e.wings || V.wings));
-  for (let attempt = 0; attempt < 600; attempt++) {
+  for (let attempt = 0; attempt < 30000; attempt++) {
     const key = V.id + (mods.aging ? '+idade' : '') + (mods.threat ? '+ameaca' : '') + (mods.hard ? '+dificil' : '') + ':' + seedStr + '#' + attempt;
     const rng = rngFrom(hashStr(key));
     const gen = () => Array.from({ length: n }, () => [rng() < 0.55 ? 1 : 0, rng() < 0.55 ? 1 : 0]);
@@ -582,7 +589,7 @@ function makePuzzle(V, seedStr, mods) {
       P.E = pool[Math.floor(rng() * pool.length)];
     }
     const res = solve(P, 3);
-    if (res && res.depth >= 2) { P.par = res.depth; P.path = res.path; return P; }
+    if (res && res.depth >= MIN_PAR) { P.par = res.depth; P.path = res.path; return P; }
   }
   return null;
 }
@@ -616,7 +623,18 @@ function drawSlime(cv, p) {
     }
   });
   if (p.asas) WING.forEach(([X, Y, c]) => { const col = c === 'K' ? PX.K : c === 'F' ? '#eef3ff' : '#b7c3df'; put(col, X, Y); put(col, 15 - X, Y); });
-  if (p.happy) {
+  if (p.sad) {
+    if (p.olhos === 2) {
+      [[5, 9], [5, 10], [10, 9], [10, 10], [6, 8], [9, 8]].forEach(([X, Y]) => put(PX.K, X, Y));
+      [[4, 11], [4, 12]].forEach(([X, Y]) => put('#9fd8ff', X, Y));
+    } else {
+      for (let X = 6; X <= 9; X++) for (let Y = 8; Y <= 10; Y++) put(PX.w, X, Y);
+      [[7, 10], [8, 10]].forEach(([X, Y]) => put(PX.K, X, Y));
+      [[6, 7], [7, 6], [8, 6], [9, 7]].forEach(([X, Y]) => put(PX.K, X, Y));
+      [[11, 10], [11, 11]].forEach(([X, Y]) => put('#9fd8ff', X, Y));
+    }
+    [[6, 12], [7, 11], [8, 11], [9, 12]].forEach(([X, Y]) => put(PX.K, X, Y));
+  } else if (p.happy) {
     if (p.olhos === 2) [[4, 9], [5, 8], [6, 9], [9, 9], [10, 8], [11, 9]].forEach(([X, Y]) => put(PX.K, X, Y));
     else [[5, 9], [6, 8], [7, 7], [8, 7], [9, 8], [10, 9]].forEach(([X, Y]) => put(PX.K, X, Y));
     [[6, 11], [7, 12], [8, 12], [9, 11]].forEach(([X, Y]) => put(PX.K, X, Y));
@@ -689,8 +707,8 @@ function today() {
 }
 function load(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
 function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sem armazenamento: segue sem salvar */ } }
-const SAVE = 'slime-dia3:';
-const STATS = 'slime-stats2';
+const SAVE = 'slime-dia4:';
+const STATS = 'slime-stats3';
 const GAME_URL = 'https://gugmt15.github.io/slime-do-dia/';
 
 let G = null;
@@ -710,6 +728,7 @@ function newGame(mode, V, seedStr, info, saved, mods) {
     dead: new Set(), fired: false, killed: 0, reason: '',
   };
   ((saved && saved.crosses) || []).forEach(([a, b]) => { if (G.status === 'playing') doCross(a, b, true); });
+  if (saved && saved.gaveup) { G.status = 'lost'; G.reason = 'Esta era a resposta.'; G.reveal = true; G.gaveup = true; }
   fresh = new Set();
   render();
 }
@@ -783,7 +802,7 @@ function statsBlock() {
     it.append(b, sp); nums.append(it);
   });
   const dist = document.createElement('div'); dist.className = 'dist';
-  const bins = [2, 3, 4, 5, 6, 'X']; /* nenhum desafio sai em 1 cruzamento: o gerador exige pelo menos 2 */
+  const bins = [3, 4, 5, 6, 7, 8, 'X']; /* nenhum desafio sai em menos de 3 cruzamentos */
   const maxv = Math.max(1, ...bins.map(b => S.dist[b] || 0));
   const mine = G.status === 'won' ? G.crosses.length : 'X';
   bins.forEach(bn => {
@@ -802,7 +821,7 @@ function statsBlock() {
 }
 
 function save() {
-  if (G.mode === 'daily') store(SAVE + G.seedStr, { crosses: G.crosses.map(c => [c.a, c.b]), marks: G.marks });
+  if (G.mode === 'daily') store(SAVE + G.seedStr, { crosses: G.crosses.map(c => [c.a, c.b]), marks: G.marks, gaveup: !!G.gaveup });
 }
 
 function nameOf(id) {
@@ -831,6 +850,8 @@ function render() {
   $('target-name').textContent = 'Slime ' + descr(V, t).join(', ');
   drawSlime($('pin-cv'), t);
   $('pin-name').textContent = descr(V, t).join(', ');
+  $('pin-geno').hidden = !EASY;
+  $('pin-geno').replaceChildren(...V.genes.map((_, i) => geneTag(pubGeno(V, t, i))));
   $('target-geno').replaceChildren(...V.genes.map((_, i) => geneTag(pubGeno(V, t, i))));
 
   const E = G.P.E;
@@ -886,7 +907,15 @@ function makeCard(c) {
   b.setAttribute('aria-pressed', G.sel.includes(c.id) ? 'true' : 'false');
   b.setAttribute('aria-label', 'Slime ' + lab(c.id) + ': ' + descr(V, c.p).join(', ') + (dead ? ', morto' : G.mods.aging ? ', pode cruzar mais ' + (AGE_LIMIT - u) + ' vezes' : ''));
   const isWin = match(V, c.p, t);
-  const sp = sprite(isWin && G.status === 'won' && !fresh.has(c.id) ? Object.assign({}, c.p, { happy: true }) : c.p);
+  const lastKids = G.crosses.length ? G.crosses[G.crosses.length - 1].kids : [];
+  const isSad = G.status === 'lost' && !G.gaveup && lastKids.includes(c.id);
+  const sp = sprite(isWin && G.status === 'won' && !fresh.has(c.id) ? Object.assign({}, c.p, { happy: true })
+    : isSad && !fresh.has(c.id) ? Object.assign({}, c.p, { sad: true }) : c.p);
+  if (isSad && !fresh.has(c.id)) b.classList.add('sad');
+  if (isSad && fresh.has(c.id)) {
+    const sadAt = KID_START + 3 * KID_GAP + KID_GROW + 0.3 + (c.idx || 0) * 0.35;
+    setTimeout(() => { drawSlime(sp, Object.assign({}, c.p, { sad: true })); b.classList.add('wilting'); }, sadAt * 1000);
+  }
   if (fresh.has(c.id) && isWin) {
     const jumpAt = KID_START + (c.idx || 0) * KID_GAP + KID_GROW;
     sp.style.animationDelay = jumpAt + 's';
@@ -1039,7 +1068,9 @@ function renderNoteBar() {
 function renderBar() {
   renderNoteBar();
   const btn = $('btn-cross'), msg = $('msg');
-  if (G.status !== 'playing') { btn.disabled = true; btn.textContent = 'Cruzar'; msg.textContent = G.holdEnd ? 'Nascendo...' : G.status === 'won' ? 'Nasceu o alvo!' : G.reason; return; }
+  $('btn-giveup').hidden = G.status !== 'playing' || !!G.autoplay;
+  if (G.autoplay && G.status === 'playing') { btn.disabled = true; btn.textContent = 'Cruzar'; msg.textContent = 'Mostrando a resposta: cruzamento ' + Math.max(1, G.autoStep) + ' de ' + G.P.path.length + '...'; return; }
+  if (G.status !== 'playing') { btn.disabled = true; btn.textContent = 'Cruzar'; msg.textContent = G.holdEnd ? (G.gaveup ? 'Mostrando a resposta...' : 'Nascendo...') : (G.status === 'won' ? 'Nasceu o alvo!' : G.reason) + ' O resultado está mais abaixo.'; return; }
   if (G.sel.length < 2) {
     btn.disabled = true; btn.textContent = 'Cruzar';
     msg.textContent = G.sel.length ? 'Escolha mais um slime (' + lab(G.sel[0]) + ' selecionado).' : 'Toque em dois slimes para cruzar.';
@@ -1072,7 +1103,7 @@ function renderEnd() {
     h.append('Você conseguiu em ', nm, G.crosses.length === 1 ? ' cruzamento!' : ' cruzamentos!');
     p.textContent = G.crosses.length <= G.P.par ? 'Isso é o mínimo possível para este desafio.' : 'O mínimo possível era ' + G.P.par + '.';
   } else {
-    h.textContent = 'Não foi dessa vez';
+    h.textContent = G.gaveup ? 'A resposta' : 'Não foi dessa vez';
     const steps = G.P.path.map((pr, i) => (i + 1) + ') ' + lab(pr[0]) + ' × ' + lab(pr[1]));
     p.textContent = G.reason + ' Dava para fazer em ' + G.P.par + ': ' + steps.join('   ');
   }
@@ -1098,6 +1129,7 @@ function renderEnd() {
 }
 
 function toggle(id) {
+  if (G.autoplay) return;
   G.focus = id;
   if (G.status !== 'playing' || !canBreed(id)) {
     G.sel = G.sel.filter(s => s !== id);
@@ -1111,10 +1143,9 @@ function toggle(id) {
   render();
 }
 
-$('btn-cross').addEventListener('click', () => {
-  if (G.sel.length !== 2 || G.status !== 'playing') return;
+function animateCross(a, b) {
   const before = new Set(fresh);
-  doCross(G.sel[0], G.sel[1], false);
+  doCross(a, b, false);
   G.sel = [];
   const born = [...fresh].filter(id => !before.has(id));
   const last = G.crosses[G.crosses.length - 1];
@@ -1126,9 +1157,57 @@ $('btn-cross').addEventListener('click', () => {
   if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
   if (G.holdEnd) {
     const waitIdx = G.status === 'won' && winIdx >= 0 ? winIdx : 3;
-    const wait = (KID_START + waitIdx * KID_GAP + KID_GROW) * 1000 + (G.status === 'won' ? 1400 : 500);
-    setTimeout(() => { G.holdEnd = false; render(); $('end').scrollIntoView({ behavior: 'smooth', block: 'center' }); }, wait);
+    const wait = (KID_START + waitIdx * KID_GAP + KID_GROW) * 1000 + (G.status === 'won' ? 1400 : G.gaveup ? 500 : 2600); /* na derrota, espera a última ninhada murchar */
+    setTimeout(() => {
+      G.holdEnd = false;
+      if (G.gaveup) { G.status = 'lost'; G.reason = 'Esta era a resposta.'; G.reveal = true; G.autoplay = false; }
+      render();
+    }, wait);
   }
+}
+const LITTER_MS = (KID_START + 3 * KID_GAP + KID_GROW) * 1000;
+
+$('btn-cross').addEventListener('click', () => {
+  if (G.sel.length !== 2 || G.status !== 'playing' || G.autoplay) return;
+  animateCross(G.sel[0], G.sel[1]);
+});
+
+/* Ver resposta: recomeça o tabuleiro e joga sozinho a sequência mais curta, com a animação normal. */
+function showAnswer() {
+  if (G.mode === 'daily') {
+    const st = load(STATS) || { days: {} };
+    if (!st.days[G.seedStr]) { st.days[G.seedStr] = { won: false, n: G.crosses.length }; store(STATS, st); }
+  }
+  newGame(G.mode, G.V, G.seedStr, G.info, null, G.mods);
+  G.gaveup = true;
+  G.autoplay = true;
+  G.autoStep = 0;
+  save();
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  const path = G.P.path;
+  const step = () => {
+    if (!G.autoplay || G.autoStep >= path.length) return;
+    const [a, b] = path[G.autoStep];
+    G.autoStep++;
+    animateCross(a, b);
+    if (G.autoStep < path.length) setTimeout(step, LITTER_MS + 700);
+  };
+  setTimeout(step, 900);
+}
+
+let giveupArmed = null;
+$('btn-giveup').addEventListener('click', e => {
+  if (!G || G.status !== 'playing') return;
+  if (!giveupArmed) {
+    e.target.textContent = 'Tem certeza? Toque de novo';
+    e.target.classList.add('armed');
+    giveupArmed = setTimeout(() => { giveupArmed = null; e.target.textContent = 'Ver resposta'; e.target.classList.remove('armed'); }, 3000);
+    return;
+  }
+  clearTimeout(giveupArmed); giveupArmed = null;
+  e.target.textContent = 'Ver resposta'; e.target.classList.remove('armed');
+  showAnswer();
 });
 
 let resetArmed = null;
@@ -1183,7 +1262,7 @@ function renderHome() {
   const rec = st.days[t.key];
   const sv = load(SAVE + t.key);
   $('daily-status').textContent = rec ? (rec.won ? 'nº ' + t.n + ' · resolvido em ' + rec.n + ' ✓' : 'nº ' + t.n + ' · não foi dessa vez')
-    : sv && sv.crosses && sv.crosses.length ? 'nº ' + t.n + ' · em andamento' : 'nº ' + t.n + ' · até 6 cruzamentos';
+    : sv && sv.crosses && sv.crosses.length ? 'nº ' + t.n + ' · em andamento' : 'nº ' + t.n + ' · até 8 cruzamentos';
   $('tut-badge').hidden = !!load('slime-tut-feito');
 }
 
@@ -1278,7 +1357,7 @@ function renderTut() {
       parts.push(kidsRow(tKids(S.parents[0], S.parents[1]), false, true), tEl('p', 'tut-say', S.say));
       if (tutStep < TSTEPS.length - 1) act.append(tBtn('Próximo', true, tNext));
       else {
-        parts.push(tEl('p', 'tut-text', 'Pronto! No desafio do dia o alvo tem três traços (cor, chifre e olhos) e você tem 6 cruzamentos para fazer ele nascer. Se precisar de ajuda, ligue o Easy Mode: ele mostra as letras dos genes embaixo de cada slime.'));
+        parts.push(tEl('p', 'tut-text', 'Pronto! No desafio do dia o alvo tem três traços (cor, chifre e olhos) e você tem 8 cruzamentos para fazer ele nascer. Se precisar de ajuda, ligue o Easy Mode: ele mostra as letras dos genes embaixo de cada slime.'));
         act.append(tBtn('Jogar o desafio do dia', true, () => { startDaily(); show('game'); }), tBtn('Voltar ao início', false, () => show('home')));
         store('slime-tut-feito', true);
       }

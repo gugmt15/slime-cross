@@ -1048,7 +1048,7 @@ function renderBar() {
   const btn = $('btn-cross'), msg = $('msg');
   $('btn-giveup').hidden = G.status !== 'playing' || !!G.autoplay;
   if (G.autoplay && G.status === 'playing') { btn.disabled = true; btn.textContent = 'Cruzar'; msg.textContent = 'Mostrando a resposta: cruzamento ' + Math.max(1, G.autoStep) + ' de ' + G.P.path.length + '...'; return; }
-  if (G.status !== 'playing') { btn.disabled = true; btn.textContent = 'Cruzar'; msg.textContent = G.holdEnd ? (G.gaveup ? 'Mostrando a resposta...' : 'Nascendo...') : G.status === 'won' ? 'Nasceu o alvo!' : G.reason; return; }
+  if (G.status !== 'playing') { btn.disabled = true; btn.textContent = 'Cruzar'; msg.textContent = G.holdEnd ? (G.gaveup ? 'Mostrando a resposta...' : 'Nascendo...') : (G.status === 'won' ? 'Nasceu o alvo!' : G.reason) + ' O resultado está mais abaixo.'; return; }
   if (G.sel.length < 2) {
     btn.disabled = true; btn.textContent = 'Cruzar';
     msg.textContent = G.sel.length ? 'Escolha mais um slime (' + lab(G.sel[0]) + ' selecionado).' : 'Toque em dois slimes para cruzar.';
@@ -1139,7 +1139,7 @@ function animateCross(a, b) {
     setTimeout(() => {
       G.holdEnd = false;
       if (G.gaveup) { G.status = 'lost'; G.reason = 'Esta era a resposta.'; G.reveal = true; G.autoplay = false; }
-      render(); $('end').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      render();
     }, wait);
   }
 }

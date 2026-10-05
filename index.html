@@ -1157,7 +1157,7 @@ function animateCross(a, b) {
   if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
   if (G.holdEnd) {
     const waitIdx = G.status === 'won' && winIdx >= 0 ? winIdx : 3;
-    const wait = (KID_START + waitIdx * KID_GAP + KID_GROW) * 1000 + (G.status === 'won' ? 1400 : 500);
+    const wait = (KID_START + waitIdx * KID_GAP + KID_GROW) * 1000 + (G.status === 'won' ? 1400 : G.gaveup ? 500 : 2600); /* na derrota, espera a última ninhada murchar */
     setTimeout(() => {
       G.holdEnd = false;
       if (G.gaveup) { G.status = 'lost'; G.reason = 'Esta era a resposta.'; G.reveal = true; G.autoplay = false; }

@@ -175,12 +175,15 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 .fx.heart { color: #ff6f91; }
 .fx.spark { color: #f2c230; }
 @keyframes floatup { 0% { transform: translate(0, 0) scale(0.4); opacity: 0; } 15% { opacity: 1; transform: translate(0, -6px) scale(1.1); } 100% { transform: translate(var(--dx), -56px) scale(0.8); opacity: 0; } }
+.slime.sad canvas.sprite { animation: none; transform: translateY(3px) scale(1.08, 0.88); transform-origin: 50% 100%; }
+.slime.wilting canvas.sprite { animation: wilt 1.1s ease-in-out both; transform-origin: 50% 100%; }
+@keyframes wilt { 0% { transform: translateY(0) scale(1, 1); } 45% { transform: translateY(4px) scale(1.14, 0.8); } 70% { transform: translateY(2px) scale(1.05, 0.92); } 100% { transform: translateY(3px) scale(1.08, 0.88); } }
 @keyframes shine { 0%, 100% { box-shadow: 0 0 0 2px var(--accent), 0 0 10px 2px var(--accent); } 50% { box-shadow: 0 0 0 3px var(--accent), 0 0 28px 10px var(--accent); } }
 @keyframes pop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animation: bob 1.4s steps(2) infinite; }
 .slime.dead canvas.sprite { animation: none; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-@media (prefers-reduced-motion: reduce) { canvas.sprite, .slime.fresh, .slime.fresh.winner, .slime.fresh.winner canvas.sprite { animation: none; } }
+@media (prefers-reduced-motion: reduce) { canvas.sprite, .slime.fresh, .slime.fresh.winner, .slime.fresh.winner canvas.sprite, .slime.wilting canvas.sprite { animation: none; } }
 
 .gens { display: flex; flex-direction: column; gap: 18px; }
 .gen-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -620,7 +623,18 @@ function drawSlime(cv, p) {
     }
   });
   if (p.asas) WING.forEach(([X, Y, c]) => { const col = c === 'K' ? PX.K : c === 'F' ? '#eef3ff' : '#b7c3df'; put(col, X, Y); put(col, 15 - X, Y); });
-  if (p.happy) {
+  if (p.sad) {
+    if (p.olhos === 2) {
+      [[5, 9], [5, 10], [10, 9], [10, 10], [6, 8], [9, 8]].forEach(([X, Y]) => put(PX.K, X, Y));
+      [[4, 11], [4, 12]].forEach(([X, Y]) => put('#9fd8ff', X, Y));
+    } else {
+      for (let X = 6; X <= 9; X++) for (let Y = 8; Y <= 10; Y++) put(PX.w, X, Y);
+      [[7, 10], [8, 10]].forEach(([X, Y]) => put(PX.K, X, Y));
+      [[6, 7], [7, 6], [8, 6], [9, 7]].forEach(([X, Y]) => put(PX.K, X, Y));
+      [[11, 10], [11, 11]].forEach(([X, Y]) => put('#9fd8ff', X, Y));
+    }
+    [[6, 12], [7, 11], [8, 11], [9, 12]].forEach(([X, Y]) => put(PX.K, X, Y));
+  } else if (p.happy) {
     if (p.olhos === 2) [[4, 9], [5, 8], [6, 9], [9, 9], [10, 8], [11, 9]].forEach(([X, Y]) => put(PX.K, X, Y));
     else [[5, 9], [6, 8], [7, 7], [8, 7], [9, 8], [10, 9]].forEach(([X, Y]) => put(PX.K, X, Y));
     [[6, 11], [7, 12], [8, 12], [9, 11]].forEach(([X, Y]) => put(PX.K, X, Y));
@@ -893,7 +907,15 @@ function makeCard(c) {
   b.setAttribute('aria-pressed', G.sel.includes(c.id) ? 'true' : 'false');
   b.setAttribute('aria-label', 'Slime ' + lab(c.id) + ': ' + descr(V, c.p).join(', ') + (dead ? ', morto' : G.mods.aging ? ', pode cruzar mais ' + (AGE_LIMIT - u) + ' vezes' : ''));
   const isWin = match(V, c.p, t);
-  const sp = sprite(isWin && G.status === 'won' && !fresh.has(c.id) ? Object.assign({}, c.p, { happy: true }) : c.p);
+  const lastKids = G.crosses.length ? G.crosses[G.crosses.length - 1].kids : [];
+  const isSad = G.status === 'lost' && !G.gaveup && lastKids.includes(c.id);
+  const sp = sprite(isWin && G.status === 'won' && !fresh.has(c.id) ? Object.assign({}, c.p, { happy: true })
+    : isSad && !fresh.has(c.id) ? Object.assign({}, c.p, { sad: true }) : c.p);
+  if (isSad && !fresh.has(c.id)) b.classList.add('sad');
+  if (isSad && fresh.has(c.id)) {
+    const sadAt = KID_START + 3 * KID_GAP + KID_GROW + 0.3 + (c.idx || 0) * 0.35;
+    setTimeout(() => { drawSlime(sp, Object.assign({}, c.p, { sad: true })); b.classList.add('wilting'); }, sadAt * 1000);
+  }
   if (fresh.has(c.id) && isWin) {
     const jumpAt = KID_START + (c.idx || 0) * KID_GAP + KID_GROW;
     sp.style.animationDelay = jumpAt + 's';

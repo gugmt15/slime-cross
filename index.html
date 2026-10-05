@@ -133,8 +133,13 @@ details.howto li { margin-bottom: 4px; }
 h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.15rem; margin: 0 0 8px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted); font-weight: 400; }
 
-.tree { overflow-x: auto; padding-bottom: 6px; }
-.tree-canvas { position: relative; margin: 0 auto; }
+.tree { overflow: auto; padding-bottom: 6px; touch-action: pan-x pan-y; }
+.tree-sizer { position: relative; margin: 0 auto; }
+.tree-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tree-head h2 { margin-bottom: 8px; }
+.zoom { display: flex; gap: 4px; }
+.zbtn { padding: 2px 10px; font-size: 0.85rem; min-width: 34px; }
+.tree-canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .links { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
 .links path { fill: none; stroke: var(--muted); stroke-opacity: 0.55; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .links path.hot { stroke: var(--accent); stroke-opacity: 1; stroke-width: 3; }
@@ -364,7 +369,14 @@ img { max-width: 100%; }
   </details>
 
   <section aria-labelledby="h-pop">
-    <h2 id="h-pop">Árvore da família <small id="pop-count"></small></h2>
+    <div class="tree-head">
+      <h2 id="h-pop">Árvore da família <small id="pop-count"></small></h2>
+      <div class="zoom" role="group" aria-label="Zoom da árvore">
+        <button class="btn zbtn" id="z-out" type="button" aria-label="Afastar">−</button>
+        <button class="btn zbtn" id="z-in" type="button" aria-label="Aproximar">+</button>
+        <button class="btn zbtn" id="z-fit" type="button">Ver tudo</button>
+      </div>
+    </div>
     <div class="tree" id="tree"></div>
   </section>
 
@@ -715,9 +727,26 @@ let G = null;
 const KID_START = 0.45, KID_GAP = 0.5, KID_GROW = 0.65;
 let fresh = new Set();
 
-function newGame(mode, V, seedStr, info, saved, mods) {
+/* Desafios do dia já calculados, a partir do nº 2 (2026-10-06). Cada um: [chave, genes de A, B e C, alvo].
+   Genes: dois dígitos por gene (cor, chifre, olhos), 1 = cópia dominante. Alvo: um dígito por traço, 1 = dominante.
+   Foram filtrados por simulação: o jogador intuitivo vence entre 50% e 95% das vezes, quem joga ao acaso no máximo 25%. */
+const DAILY = [["1","100000","000011","101011","010"],["9","110011","110101","001110","001"],["11","010111","001111","110000","010"],["13","111000","000111","100011","000"],["19","001011","110000","011111","010"],["22","111100","000011","111101","000"],["30","001100","000011","100011","100"],["39","110000","010110","000011","010"],["46","001111","010010","110100","000"],["47","101100","100011","011111","100"],["63","111011","000111","110100","010"],["68","001111","101101","110000","001"],["78","000011","101100","010011","100"],["80","001110","110000","010011","000"],["88","000010","110000","111011","010"],["90","101111","111100","000011","000"],["92","111100","110011","001101","001"],["98","011111","000011","001000","100"],["100","101110","110000","001111","001"],["101","000111","111100","110111","010"],["107","011100","001101","000011","100"],["112","000011","111100","101111","010"],["114","110001","001110","111101","001"],["116","110111","110000","001111","010"],["120","110011","001110","101111","001"],["122","101110","001100","000010","100"],["125","110001","001111","101101","001"],["129","000001","001100","011111","100"],["132","001100","011111","110000","001"],["134","010011","001100","010011","100"],["136","011100","100011","001111","000"],["137","110000","001011","100011","010"],["142","011111","100011","001100","100"],["146","000010","110000","110111","010"],["149","000100","000011","011101","100"],["156","110100","000111","110001","000"],["157","111000","000111","111110","010"],["161","100111","000011","001100","100"],["175","001100","110101","110000","001"],["176","000111","110000","111011","010"],["191","001101","110001","111100","000"],["194","110000","001111","001101","001"],["197","111111","100011","101100","100"],["199","111000","111011","001111","010"],["203","110001","110010","001100","001"],["204","010011","011100","001100","000"],["205","110000","001100","110010","001"],["208","110011","101100","010111","100"],["227","111100","000111","110111","010"],["237","110110","001100","010000","001"],["239","000011","110111","111000","010"],["248","001100","010111","000010","100"],["249","001111","001111","110011","001"],["260","000111","110000","100001","010"],["262","001100","100111","010011","100"],["263","110010","110101","001100","001"],["268","110000","111100","001011","010"],["284","010011","001100","000011","100"],["287","110010","011101","001100","001"],["308","110111","000011","001100","100"],["319","111111","001100","010000","001"],["320","110000","000010","011011","010"],["325","000100","101100","000011","100"],["339","110000","000010","111111","010"],["343","110101","110011","001110","001"],["352","111111","000011","111100","010"],["353","101100","110001","001111","001"],["358","111101","000011","111100","000"],["361","111100","000011","111100","010"],["363","001000","111101","110000","001"],["366","110000","000010","111011","010"],["369","110000","001100","111101","001"],["373","111100","001110","010011","100"],["378","110000","001111","111011","010"],["383","001100","101101","100000","001"],["390","000011","010000","110111","010"],["401","001111","110011","011101","001"],["405","101100","100011","011100","100"],["407","111100","001111","110010","001"],["408","111000","110011","000011","010"],["412","001100","110011","101111","100"],["418","001110","110001","111100","001"],["420","000010","110000","110111","010"],["422","000001","001101","011100","101"],["423","111100","010011","101110","100"],["446","110010","001101","101100","001"],["473","000001","100000","001011","010"],["475","111101","100000","001000","001"],["484","000011","111100","011111","010"],["487","000011","001100","010111","100"],["496","100000","111111","000011","010"],["499","100011","101100","000011","100"],["501","000011","111100","001110","000"],["502","111110","001110","110011","001"],["503","111000","001101","110001","000"],["506","111101","110000","001111","001"],["507","110010","011100","001110","000"],["525","001111","100011","110100","010"],["526","101110","010011","001100","100"],["529","101000","110011","001110","000"]];
+function puzzleFromList(V, d) {
+  const [num, a, b, c, tg] = d;
+  const P = { V, key: 'lista1:' + num, mods: NO_MODS, reg: new Map(), lit: new Map(), E: null };
+  const gen = str => [0, 1, 2].map(i => [+str[2 * i], +str[2 * i + 1]]);
+  P.starters = [['A', a], ['B', b], ['C', c]].map(([id, str]) => reg(P, { id, parents: null, g: gen(str) }));
+  P.target = { cor: tg[0] === '1' ? 'vermelho' : 'azul', chifre: tg[1] === '1', olhos: tg[2] === '1' ? 2 : 1 };
+  const res = solve(P, 3);
+  if (!res) return null;
+  P.par = res.depth; P.path = res.path;
+  return P;
+}
+
+function newGame(mode, V, seedStr, info, saved, mods, listed) {
   mods = Object.assign({}, NO_MODS, mods || {});
-  let P = makePuzzle(V, seedStr, mods);
+  let P = listed ? puzzleFromList(V, listed) : null;
+  if (!P) P = makePuzzle(V, seedStr, mods);
   for (let extra = 1; !P && extra < 20; extra++) P = makePuzzle(V, seedStr + '+' + extra, mods);
   G = {
     mode, V, seedStr, info, P, mods,
@@ -954,6 +983,18 @@ function cardH() {
   return 74 + (marks ? 15 : 0) + (G.reveal ? 15 : 0) + (G.mods.aging || G.P.E ? 13 : 0);
 }
 
+let TREE_SIZE = { w: 0, h: 0 };
+function applyZoom() {
+  const host = $('tree'), sizer = host.querySelector('.tree-sizer'), canvas = host.querySelector('.tree-canvas');
+  if (!sizer || !canvas || !G) return;
+  const z = G.zoom || 1;
+  canvas.style.transform = 'scale(' + z + ')';
+  sizer.style.width = Math.ceil(TREE_SIZE.w * z) + 'px';
+  sizer.style.height = Math.ceil(TREE_SIZE.h * z) + 'px';
+}
+function setZoom(z) { if (!G) return; G.zoom = Math.max(0.3, Math.min(1.6, z)); applyZoom(); }
+function fitZoom() { const w = $('tree').clientWidth - 4; return TREE_SIZE.w ? Math.min(1, w / TREE_SIZE.w) : 1; }
+
 /* Árvore: cada cruzamento é um nó com o número dele; os dois pais descem até ele, e dele saem os 4 filhotes. */
 function renderTree() {
   const host = $('tree');
@@ -1016,7 +1057,11 @@ function renderTree() {
       canvas.append(card);
     }
   });
-  host.replaceChildren(canvas);
+  const sizer = document.createElement('div'); sizer.className = 'tree-sizer';
+  sizer.append(canvas);
+  host.replaceChildren(sizer);
+  TREE_SIZE = { w: gw, h: gh };
+  applyZoom();
 }
 
 /* Reserva, se a biblioteca da árvore não carregar: uma linha por geração. */
@@ -1178,7 +1223,7 @@ function showAnswer() {
     const st = load(STATS) || { days: {} };
     if (!st.days[G.seedStr]) { st.days[G.seedStr] = { won: false, n: G.crosses.length }; store(STATS, st); }
   }
-  newGame(G.mode, G.V, G.seedStr, G.info, null, G.mods);
+  newGame(G.mode, G.V, G.seedStr, G.info, null, G.mods, G.mode === 'daily' ? DAILY[G.info.n - 2] : null);
   G.gaveup = true;
   G.autoplay = true;
   G.autoStep = 0;
@@ -1219,14 +1264,14 @@ $('btn-reset').addEventListener('click', e => {
   }
   clearTimeout(resetArmed); resetArmed = null; e.target.textContent = 'Recomeçar';
   if (G.mode === 'daily') store(SAVE + G.seedStr, { crosses: [], marks: {} });
-  newGame(G.mode, G.V, G.seedStr, G.info, null, G.mods);
+  newGame(G.mode, G.V, G.seedStr, G.info, null, G.mods, G.mode === 'daily' ? DAILY[G.info.n - 2] : null);
   window.scrollTo({ top: 0 });
 });
 
 function startDaily() {
   const t = today();
   const V = VARIANTS.classico;
-  newGame('daily', V, t.key, { n: t.n, dia: DIAS[t.dow] }, load(SAVE + t.key), NO_MODS);
+  newGame('daily', V, t.key, { n: t.n, dia: DIAS[t.dow] }, load(SAVE + t.key), NO_MODS, DAILY[t.n - 2]);
 }
 function startTrain(vid) {
   const mods = { aging: $('mod-aging').checked, threat: $('mod-threat').checked, hard: $('mod-hard').checked };
@@ -1377,6 +1422,29 @@ function renderTut() {
   }
   $('tut-body').replaceChildren(...parts);
 }
+
+$('z-in').addEventListener('click', () => setZoom((G.zoom || 1) * 1.25));
+$('z-out').addEventListener('click', () => setZoom((G.zoom || 1) / 1.25));
+$('z-fit').addEventListener('click', () => setZoom(fitZoom()));
+(() => {
+  const pts = new Map(); let start = null;
+  const host = $('tree');
+  const dist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+  host.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) start = { d: dist(), z: G.zoom || 1 }; });
+  host.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2 && start && start.d > 0) setZoom(start.z * dist() / start.d);
+  });
+  const end = e => { pts.delete(e.pointerId); if (pts.size < 2) start = null; };
+  host.addEventListener('pointerup', end); host.addEventListener('pointercancel', end); host.addEventListener('pointerleave', end);
+  /* impede que a pinça na árvore dê zoom na página inteira (o resultado e o resto ficam no tamanho normal) */
+  host.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  let gz = 1;
+  host.addEventListener('gesturestart', e => { e.preventDefault(); gz = G ? (G.zoom || 1) : 1; });
+  host.addEventListener('gesturechange', e => { e.preventDefault(); if (!pts.size) setZoom(gz * e.scale); });
+  host.addEventListener('gestureend', e => e.preventDefault());
+})();
 
 $('go-daily').addEventListener('click', () => { startDaily(); show('game'); });
 $('go-tut').addEventListener('click', () => { startTutorial(); show('tut'); });

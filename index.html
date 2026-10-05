@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slime do Dia</title>
+<meta name="description" content="Desafio diário de genética de Mendel: cruze slimes com genes escondidos até fazer nascer o alvo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+/* Layout: caderno de laboratório quadriculado; alvo e ameaça no topo, árvore genealógica no meio, barra de anotar e cruzar presa embaixo. */
+:root {
+  --bg: #edf1ea;
+  --grid: #dce5d8;
+  --surface: #fafcf8;
+  --well: #e4ebe0;
+  --ink: #1c2620;
+  --muted: #5a6a5f;
+  --line: #c6d2c2;
+  --accent: #4a8526;
+  --accent-ink: #ffffff;
+  --danger: #b4432f;
+  --font-display: "Pixelify Sans", "Courier New", monospace;
+  --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101612; --grid: #17201a; --surface: #172019; --well: #2a372e;
+    --ink: #e2ebe3; --muted: #97a99c; --line: #2e3c33;
+    --accent: #8cc35a; --accent-ink: #0f1a10; --danger: #e8735c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101612; --grid: #17201a; --surface: #172019; --well: #2a372e;
+  --ink: #e2ebe3; --muted: #97a99c; --line: #2e3c33;
+  --accent: #8cc35a; --accent-ink: #0f1a10; --danger: #e8735c;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 20px 0;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 2.4rem; line-height: 1; margin: 0; letter-spacing: 0.01em; }
+.sub { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+.sub b { color: var(--ink); }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+button, select { font: inherit; }
+button { cursor: pointer; }
+.btn {
+  border: 1.5px solid var(--ink); background: var(--surface); color: var(--ink);
+  padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.9rem;
+}
+.btn:hover { background: var(--well); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+button:focus-visible, summary:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.trainbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--surface); border: 1px dashed var(--ink); border-radius: 8px; padding: 10px 12px; }
+.trainbar label { font-weight: 700; font-size: 0.9rem; }
+.trainbar .mods { display: flex; flex-wrap: wrap; gap: 4px 14px; flex: 1 1 100%; font-size: 0.88rem; }
+.trainbar .mods label { font-weight: 400; display: flex; gap: 6px; align-items: center; }
+.trainbar .mods input { accent-color: var(--accent); width: 16px; height: 16px; }
+.btn.toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.trainbar select { border: 1.5px solid var(--ink); border-radius: 6px; padding: 5px 8px; background: var(--bg); color: var(--ink); min-width: 0; max-width: 100%; }
+
+.target {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center;
+  background: var(--surface); border: 2px solid var(--ink); border-radius: 10px; padding: 14px 16px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.target .eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.target .tname { font-size: 1.3rem; font-weight: 700; line-height: 1.2; text-wrap: balance; }
+.target .well { background: var(--well); border-radius: 8px; padding: 6px; }
+.target canvas { width: 96px; height: 96px; display: block; }
+.tgeno { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+.tgeno-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.tgeno-tags .gene { font-size: 0.95rem; }
+.threat { grid-column: 1 / -1; border-top: 1.5px dashed var(--line); padding-top: 10px; font-size: 0.92rem; display: flex; gap: 8px; align-items: baseline; }
+.threat b { color: var(--danger); flex: none; }
+.threat.done b { color: var(--muted); }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 12px; }
+.rule { font-size: 0.86rem; color: var(--muted); border-top: 2px solid var(--line); padding-top: 6px; min-width: 0; }
+.rule.new { border-top-color: var(--accent); }
+.rule b { color: var(--ink); display: block; font-size: 0.75rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
+.rule .letters { display: flex; flex-wrap: wrap; gap: 2px 12px; color: var(--ink); margin: 3px 0 2px; }
+.rule .legend { white-space: nowrap; }
+.rule .desc { display: block; }
+.gene, details.howto code, .tgeno code {
+  font-family: var(--font-mono); font-weight: 600; font-size: 0.85em; color: var(--ink);
+  border: 1.5px solid var(--ink); border-radius: 4px; background: var(--surface);
+  padding: 0 4px; line-height: 1.35; display: inline-block; letter-spacing: 0.04em;
+}
+
+details.howto { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+details.howto summary { font-weight: 700; cursor: pointer; }
+details.howto p, details.howto ol { margin: 8px 0; max-width: 65ch; }
+details.howto li { margin-bottom: 4px; }
+
+h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.15rem; margin: 0 0 8px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted); font-weight: 400; }
+
+.tree { overflow-x: auto; padding-bottom: 6px; }
+.tree-canvas { position: relative; margin: 0 auto; }
+.links { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.links path { fill: none; stroke: var(--muted); stroke-opacity: 0.55; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.links path.hot { stroke: var(--accent); stroke-opacity: 1; stroke-width: 3; }
+.xnode {
+  position: absolute; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-weight: 600; font-size: 0.72rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.xnode.hot { background: var(--accent); color: var(--accent-ink); }
+
+.slime {
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; padding: 4px 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 1px; color: var(--ink); min-width: 0;
+}
+.tree-canvas .slime { position: absolute; width: 80px; }
+.slime:hover { border-color: var(--ink); }
+.slime[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); background: var(--well); }
+.slime.focus { outline: 2px dashed var(--accent); outline-offset: 2px; }
+.slime canvas { width: 44px; height: 44px; display: block; }
+.slime .lab { font-weight: 700; font-size: 0.98rem; line-height: 1.1; }
+.slime .mark { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.2; white-space: nowrap; color: var(--muted); }
+.slime .mark .picked { color: var(--accent); font-weight: 600; }
+.slime .geno { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.slime .uses { display: flex; gap: 3px; margin-top: 1px; }
+.slime .uses i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--ink); display: block; }
+.slime .uses i.left { background: var(--ink); }
+.slime .tag { font-size: 0.66rem; color: var(--danger); font-weight: 700; }
+.slime.tired { opacity: 0.6; }
+.slime.dead { opacity: 0.45; border-style: dashed; }
+.slime.dead canvas { filter: grayscale(1); }
+.slime.fresh { animation: pop 420ms steps(4); }
+.slime.hit { border-color: var(--accent); background: var(--well); }
+@keyframes pop { from { transform: scale(0.6); } to { transform: scale(1); } }
+canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animation: bob 1.4s steps(2) infinite; }
+.slime.dead canvas.sprite { animation: none; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { canvas.sprite, .slime.fresh { animation: none; } }
+
+.gens { display: flex; flex-direction: column; gap: 18px; }
+.gen-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.gens .slime { width: 80px; }
+
+.bar {
+  position: sticky; bottom: 0; z-index: 2;
+  margin-inline: -16px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); border-top: 2px solid var(--ink);
+}
+.bar-in { max-width: 760px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.pips { display: flex; gap: 4px; }
+.pip { width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 3px; }
+.pip.used { background: var(--ink); }
+.msg { font-size: 0.92rem; flex: 1 1 220px; min-width: 0; }
+.notebar { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.notebar .nb-title { font-weight: 700; font-size: 0.88rem; }
+.gpick { display: flex; align-items: center; gap: 4px; }
+.gpick .gname { font-size: 0.75rem; color: var(--muted); margin-right: 2px; }
+.gpick .fixed { font-family: var(--font-mono); font-weight: 600; font-size: 0.85rem; padding: 2px 6px; }
+.gpick button { font-family: var(--font-mono); font-weight: 600; font-size: 0.85rem; padding: 2px 7px; border-radius: 5px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); }
+.gpick button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+
+.end { background: var(--surface); border: 2px solid var(--accent); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.end h3 { font-family: var(--font-display); font-size: 1.4rem; margin: 0; }
+.end p { margin: 0; max-width: 65ch; }
+.end .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stats { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+.stat-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.stat { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.stat b { font-family: var(--font-display); font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 0.75rem; color: var(--muted); }
+.dist { display: flex; flex-direction: column; gap: 3px; }
+.drow { display: grid; grid-template-columns: 1.4em 1fr; gap: 6px; align-items: center; font-family: var(--font-mono); font-size: 0.8rem; }
+.dk { text-align: right; color: var(--muted); }
+.dbar { background: var(--line); color: var(--ink); padding: 0 6px; border-radius: 3px; text-align: right; font-variant-numeric: tabular-nums; }
+.dbar.mine { background: var(--accent); color: var(--accent-ink); }
+.stat-cap { font-size: 0.75rem; color: var(--muted); }
+.sharebox { width: 100%; font-family: var(--font-mono); font-size: 0.85rem; min-height: 7em; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+
+footer { font-size: 0.8rem; color: var(--muted); padding-bottom: 16px; max-width: 65ch; }
+[hidden] { display: none !important; }
+html { color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Slime do Dia</h1>
+      <div class="sub" id="sub">desafio de genética</div>
+    </div>
+    <div class="tools">
+      <button class="btn toggle" id="btn-easy" type="button" aria-pressed="false">Easy Mode</button>
+      <button class="btn primary" id="btn-new-top" type="button" hidden>Novo desafio</button>
+      <button class="btn" id="btn-reset" type="button">Recomeçar</button>
+      <button class="btn" id="btn-mode" type="button">Treino</button>
+    </div>
+  </header>
+
+  <div class="trainbar" id="trainbar" hidden>
+    <label for="variant">Versão</label>
+    <select id="variant"></select>
+    <button class="btn" id="btn-new" type="button">Novo desafio</button>
+    <div class="mods" role="group" aria-label="Modos especiais">
+      <label><input type="checkbox" id="mod-aging"> Envelhecer: cada slime cruza só 2 vezes</label>
+      <label><input type="checkbox" id="mod-threat"> Ameaça: o ambiente mata uma aparência depois do 2º cruzamento</label>
+      <label><input type="checkbox" id="mod-hard"> Difícil: o gene que o alvo pede pode estar escondido nos iniciais</label>
+    </div>
+  </div>
+
+  <section class="target" aria-label="Alvo">
+    <div class="well"><canvas id="target-cv" class="sprite" width="16" height="16"></canvas></div>
+    <div>
+      <div class="eyebrow" id="target-eyebrow">Alvo de hoje</div>
+      <div class="tname" id="target-name">Slime</div>
+      <div class="tgeno">Genes do alvo: <span id="target-geno" class="tgeno-tags"></span></div>
+    </div>
+    <div class="threat" id="threat"><b>Ameaça</b><span id="threat-text"></span></div>
+  </section>
+
+  <div class="rules" id="rules" aria-label="Regras de herança"></div>
+
+  <details class="howto" id="howto">
+    <summary>Como jogar</summary>
+    <p>Tu vê só a aparência dos slimes. Os genes ficam escondidos.</p>
+    <ol>
+      <li>Toca em dois slimes e aperta <b>Cruzar</b>. Nascem sempre 4 filhotes, nas proporções exatas de Mendel, gene por gene. O mesmo par dá sempre a mesma ninhada.</li>
+      <li>Cada slime tem duas cópias de cada gene, uma de cada pai. Cada gene tem uma letra: maiúscula é a versão dominante, minúscula a recessiva. Basta uma maiúscula pro traço dominante aparecer; o recessivo só aparece com as duas minúsculas.</li>
+      <li>Faz nascer o alvo antes de acabarem os cruzamentos.</li>
+    </ol>
+    <p><b>Easy Mode</b> mostra embaixo de cada slime e do alvo o que a aparência já entrega dos genes. <code>V_</code> quer dizer "tem um V, e a outra letra ainda não se sabe" (pode ser <code>VV</code> ou <code>Vv</code>); <code>__</code> quer dizer que pode ser qualquer coisa. No Easy Mode também dá pra tocar num slime e marcar, pela barra de baixo, as letras que tu deduziu dele. Sem o Easy Mode não aparece letra nenhuma: só os slimes.</p>
+    <p>O gene que o alvo pede sempre aparece à vista em algum slime inicial: se o alvo é sem chifre, algum dos iniciais já é sem chifre. Dá pra resolver só deduzindo.</p>
+    <p>No <b>Treino</b> tem três modos especiais. <b>Difícil</b>: o gene que o alvo pede pode estar escondido em slimes que não mostram ele, e aí é preciso caçar o portador. <b>Envelhecer</b>: cada slime cruza no máximo duas vezes. <b>Ameaça</b>: depois do 2º cruzamento, o ambiente mata os slimes de uma certa aparência, e a ameaça é anunciada no começo. Ela só enxerga a aparência: um slime vermelho que carrega azul escapa do gavião que caça azuis.</p>
+    <p>Slime não tem sexo: qualquer um cruza com qualquer outro, menos com ele mesmo.</p>
+    <p>O desafio do dia é sempre a versão clássica, com três genes e 6 cruzamentos.</p>
+    <p>No <b>Treino</b> dá pra escolher outras versões, cada uma com uma regra a mais de genética: <b>Roxo</b> (vermelho com azul dá roxo), <b>Transparente</b> (um gene esconde a cor), <b>Quatro genes</b> (com asas, 7 cruzamentos) e <b>Roxo e transparente</b> juntos (7 cruzamentos). Dá pra jogar quantas vezes quiser, com ou sem os modos especiais.</p>
+  </details>
+
+  <section aria-labelledby="h-pop">
+    <h2 id="h-pop">Árvore da família <small id="pop-count"></small></h2>
+    <div class="tree" id="tree"></div>
+  </section>
+
+  <section id="end" class="end" hidden aria-live="polite"></section>
+
+  <footer>
+    Mendel chegou nessas regras cruzando ervilhas no jardim do mosteiro de Brno, entre 1856 e 1863. A cor intermediária e o gene que esconde outro foram entendidos depois dele, no começo do século 20.
+  </footer>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="notebar" id="notebar" hidden></div>
+    <div class="msg" id="msg" aria-live="polite">Toca em dois slimes pra cruzar.</div>
+    <div class="pips" id="pips" aria-label="Cruzamentos usados"></div>
+    <button class="btn primary" id="btn-cross" type="button" disabled>Cruzar</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+<script>
+/* ---------- versões ---------- */
+const AGE_LIMIT = 2;
+const NO_MODS = { aging: false, threat: false, hard: false };
+let EASY = false;
+const EVENT_AT = 2;
+const VARIANTS = {
+  classico: { id: 'classico', nome: 'Clássico', max: 6 },
+  roxo: { id: 'roxo', nome: 'Roxo', max: 6, inc: true },
+  transparente: { id: 'transparente', nome: 'Transparente', max: 6, trans: true },
+  asas: { id: 'asas', nome: 'Quatro genes', max: 7, wings: true },
+  mistura: { id: 'mistura', nome: 'Roxo e transparente', max: 7, inc: true, trans: true },
+};
+Object.values(VARIANTS).forEach(V => {
+  V.genes = ['V', 'C', 'O'].concat(V.trans ? ['T'] : [], V.wings ? ['A'] : []);
+  V.keys = ['cor', 'chifre', 'olhos'].concat(V.wings ? ['asas'] : []);
+});
+const DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+const GENE_NAMES = { V: 'Cor', C: 'Chifre', O: 'Olhos', T: 'Transp.', A: 'Asas' };
+
+const EVENTS = [
+  { k: 'olhos', v: 1, txt: 'uma raposa come todo slime de um olho, que não vê ela chegando', who: 'A raposa' },
+  { k: 'chifre', v: false, txt: 'um lobo come todo slime sem chifre, que não tem como se defender', who: 'O lobo' },
+  { k: 'cor', v: 'vermelho', txt: 'um gavião leva todo slime vermelho, que se vê de longe', who: 'O gavião' },
+  { k: 'cor', v: 'azul', txt: 'um gavião leva todo slime azul, que se vê de longe', who: 'O gavião' },
+  { k: 'cor', v: 'roxo', inc: true, txt: 'um gavião leva todo slime roxo, que se vê de longe', who: 'O gavião' },
+  { k: 'cor', v: 'transparente', trans: true, txt: 'um sol forte evapora todo slime transparente', who: 'O sol' },
+  { k: 'asas', v: true, wings: true, txt: 'uma ventania leva embora todo slime de asa', who: 'A ventania' },
+];
+
+/* Nas regras, {xx} marca um código de gene, que aparece como etiqueta e não como letra solta da frase. */
+function rulesOf(V) {
+  const r = [];
+  r.push(V.inc
+    ? { t: 'Cor', l: [['V', 'vermelho'], ['v', 'azul']], s: 'Sem dominância: {VV} é vermelho, {Vv} é roxo, {vv} é azul.', novo: true }
+    : { t: 'Cor', l: [['V', 'vermelho'], ['v', 'azul']], s: 'Vermelho domina: {Vv} é vermelho e carrega azul escondido. Só {vv} é azul.' });
+  r.push({ t: 'Chifre', l: [['C', 'com chifre'], ['c', 'sem chifre']], s: 'Chifre domina: só {cc} nasce sem chifre.' });
+  r.push({ t: 'Olhos', l: [['O', 'dois olhos'], ['o', 'um olho']], s: 'Dois olhos domina: só {oo} nasce com um olho.' });
+  if (V.trans) r.push({ t: 'Transparência', l: [['T', 'normal'], ['t', 'transparente']], s: 'Só {tt} fica transparente, e aí a cor dele some da vista. Ela continua lá e passa pros filhos.', novo: true });
+  if (V.wings) r.push({ t: 'Asas', l: [['A', 'sem asa'], ['a', 'com asa']], s: 'Sem asa domina: só {aa} nasce com asas.', novo: true });
+  return r;
+}
+function geneTag(txt) { const e = document.createElement('span'); e.className = 'gene'; e.textContent = txt; return e; }
+function withTags(text) {
+  return text.split(/(\{[^}]+\})/).filter(Boolean).map(part => (part[0] === '{' ? geneTag(part.slice(1, -1)) : part));
+}
+
+/* ---------- lógica: genética, ninhadas, ameaça, gerador e solucionador ---------- */
+function hashStr(s) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h;
+}
+function rngFrom(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shuffle4(rng) {
+  const p = [0, 1, 2, 3];
+  for (let i = 3; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+  return p;
+}
+
+function reg(P, c) { c.p = phenOf(P.V, c.g); P.reg.set(c.id, c); return c; }
+
+function phenOf(V, g) {
+  const has = i => (g[i][0] | g[i][1]);
+  let cor = V.inc ? ['azul', 'roxo', 'vermelho'][g[0][0] + g[0][1]] : (has(0) ? 'vermelho' : 'azul');
+  if (V.trans && !has(V.genes.indexOf('T'))) cor = 'transparente';
+  const p = { cor, chifre: !!has(1), olhos: has(2) ? 2 : 1 };
+  if (V.wings) p.asas = !has(V.genes.indexOf('A'));
+  return p;
+}
+function hits(V, p, t) { let n = 0; V.keys.forEach(k => { if (p[k] === t[k]) n++; }); return n; }
+function match(V, p, t) { return hits(V, p, t) === V.keys.length; }
+function killedBy(E, p) { return !!E && p[E.k] === E.v; }
+function pairKey(a, b) { return a.id < b.id ? a.id + '|' + b.id : b.id + '|' + a.id; }
+
+function litter(P, a, b) {
+  const [x, y] = a.id < b.id ? [a, b] : [b, a];
+  const mk = x.id + '|' + y.id;
+  if (P.lit.has(mk)) return P.lit.get(mk);
+  const n = P.V.genes.length;
+  const kids = [0, 1, 2, 3].map(k => ({ id: '(' + x.id + 'x' + y.id + ')' + k, g: [], parents: [x.id, y.id], idx: k }));
+  for (let i = 0; i < n; i++) {
+    const pun = [
+      [x.g[i][0], y.g[i][0]], [x.g[i][0], y.g[i][1]],
+      [x.g[i][1], y.g[i][0]], [x.g[i][1], y.g[i][1]],
+    ];
+    const perm = shuffle4(rngFrom(hashStr(P.key + '|' + mk + '|' + i)));
+    for (let k = 0; k < 4; k++) kids[k].g[i] = pun[perm[k]].slice();
+  }
+  kids.forEach(k => reg(P, k));
+  P.lit.set(mk, kids);
+  return kids;
+}
+
+/* Busca o menor número de cruzamentos, respeitando o limite de uso e a ameaça. */
+function solve(P, maxD) {
+  const V = P.V, E = P.E;
+  function dfs(pop, uses, done, made, d) {
+    for (let i = 0; i < pop.length; i++) {
+      const a = pop[i];
+      if (P.mods.aging && (uses[a.id] || 0) >= AGE_LIMIT) continue;
+      for (let j = i + 1; j < pop.length; j++) {
+        const b = pop[j];
+        if (P.mods.aging && (uses[b.id] || 0) >= AGE_LIMIT) continue;
+        const pk = pairKey(a, b);
+        if (done.includes(pk)) continue;
+        const kids = litter(P, a, b);
+        if (kids.some(k => match(V, k.p, P.target))) return [[a.id, b.id]];
+        if (d > 1) {
+          const nu = Object.assign({}, uses);
+          nu[a.id] = (nu[a.id] || 0) + 1; nu[b.id] = (nu[b.id] || 0) + 1;
+          let np = pop.concat(kids);
+          if (made + 1 === EVENT_AT) np = np.filter(c => !killedBy(E, c.p));
+          const r = dfs(np, nu, done.concat(pk), made + 1, d - 1);
+          if (r) return [[a.id, b.id]].concat(r);
+        }
+      }
+    }
+    return null;
+  }
+  for (let d = 1; d <= maxD; d++) {
+    const r = dfs(P.starters.slice(), {}, [], 0, d);
+    if (r) return { depth: d, path: r };
+  }
+  return null;
+}
+
+function interesting(V, t) {
+  return t.cor !== 'vermelho' || !t.chifre || t.olhos === 1 || (V.wings && t.asas);
+}
+
+/* Modo justo: toda letra que o alvo precisa já aparece à vista em algum slime inicial,
+   então dá pra achar o gene por dedução, sem cruzar no escuro atrás de um portador escondido. */
+function knownLetters(pub) { return pub.split('').filter(ch => ch !== '_'); }
+function fairStart(V, starters, target) {
+  return V.genes.every((_, i) => {
+    const need = [...new Set(knownLetters(pubGeno(V, target, i)))];
+    return need.every(a => starters.some(s => knownLetters(pubGeno(V, s.p, i)).includes(a)));
+  });
+}
+
+function makePuzzle(V, seedStr, mods) {
+  const n = V.genes.length;
+  const valid = EVENTS.filter(e => (!e.inc || V.inc) && (!e.trans || V.trans) && (!e.wings || V.wings));
+  for (let attempt = 0; attempt < 600; attempt++) {
+    const key = V.id + (mods.aging ? '+idade' : '') + (mods.threat ? '+ameaca' : '') + (mods.hard ? '+dificil' : '') + ':' + seedStr + '#' + attempt;
+    const rng = rngFrom(hashStr(key));
+    const gen = () => Array.from({ length: n }, () => [rng() < 0.55 ? 1 : 0, rng() < 0.55 ? 1 : 0]);
+    const P = { V, key, mods, reg: new Map(), lit: new Map(), E: null };
+    P.starters = ['A', 'B', 'C'].map(id => reg(P, { id, parents: null, g: gen() }));
+    P.target = phenOf(V, gen());
+    if (!interesting(V, P.target)) continue;
+    if (P.starters.some(s => match(V, s.p, P.target))) continue;
+    if (!mods.hard && !fairStart(V, P.starters, P.target)) continue;
+    if (mods.threat) {
+      const onTarget = valid.filter(e => P.target[e.k] === e.v);
+      const pool = onTarget.length && rng() < 0.5 ? onTarget : valid;
+      P.E = pool[Math.floor(rng() * pool.length)];
+    }
+    const res = solve(P, 3);
+    if (res && res.depth >= 2) { P.par = res.depth; P.path = res.path; return P; }
+  }
+  return null;
+}
+
+/* ---------- desenho dos slimes ---------- */
+const BASE = [
+  '................', '................', '................', '................',
+  '......KKKK......', '....KKLLLLKK....', '...KLwwLLLLLK...', '..KLwwLLLLLLLK..',
+  '..KLLLLLLLLLLK..', '.KLLLLLLLLLLLLK.', '.KLLLLLLLLLLLLK.', '.KLLLLLLLLLLLLK.',
+  '.KlLLLLLLLLLLlK.', '.KllLLLLLLLLllK.', '..KKKKKKKKKKKK..', '................',
+];
+const PX = { K: '#1a1c2c', w: '#ffffff', H: '#efe4c4', h: '#bfae84' };
+const BODY = {
+  vermelho: ['#d6453d', '#9b2b2e'],
+  roxo: ['#9a4fd0', '#62308f'],
+  azul: ['#3f72d8', '#25458f'],
+  transparente: ['rgba(200, 236, 244, 0.45)', 'rgba(110, 170, 190, 0.7)'],
+};
+const WING = [[0, 3, 'K'], [0, 4, 'K'], [1, 4, 'K'], [0, 5, 'K'], [1, 5, 'F'], [2, 5, 'K'], [0, 6, 'K'], [1, 6, 'F'], [2, 6, 'F'], [3, 6, 'K'], [0, 7, 'K'], [1, 7, 'F'], [2, 7, 'f'], [0, 8, 'K'], [1, 8, 'f'], [2, 8, 'K'], [1, 9, 'K']];
+function drawSlime(cv, p) {
+  const x = cv.getContext('2d');
+  x.clearRect(0, 0, 16, 16);
+  const body = BODY[p.cor];
+  const put = (c, X, Y) => { x.fillStyle = c; x.fillRect(X, Y, 1, 1); };
+  BASE.forEach((row, Y) => {
+    for (let X = 0; X < 16; X++) {
+      const ch = row[X];
+      if (ch === 'L') put(body[0], X, Y);
+      else if (ch === 'l') put(body[1], X, Y);
+      else if (ch === 'K' || ch === 'w') put(PX[ch], X, Y);
+    }
+  });
+  if (p.asas) WING.forEach(([X, Y, c]) => { const col = c === 'K' ? PX.K : c === 'F' ? '#eef3ff' : '#b7c3df'; put(col, X, Y); put(col, 15 - X, Y); });
+  if (p.olhos === 2) {
+    [[5, 9], [5, 10], [10, 9], [10, 10]].forEach(([X, Y]) => put(PX.K, X, Y));
+  } else {
+    for (let X = 6; X <= 9; X++) for (let Y = 8; Y <= 10; Y++) put(PX.w, X, Y);
+    [[7, 9], [8, 9], [7, 10], [8, 10]].forEach(([X, Y]) => put(PX.K, X, Y));
+  }
+  if (p.chifre) {
+    put(PX.K, 8, 1);
+    put(PX.K, 7, 2); put(PX.H, 8, 2); put(PX.K, 9, 2);
+    put(PX.K, 6, 3); put(PX.H, 7, 3); put(PX.H, 8, 3); put(PX.K, 9, 3);
+    put(PX.H, 7, 4); put(PX.h, 8, 4);
+  }
+}
+function sprite(p) {
+  const cv = document.createElement('canvas');
+  cv.width = 16; cv.height = 16;
+  cv.className = 'sprite';
+  cv.style.animationDelay = (-Math.random() * 1.4).toFixed(2) + 's';
+  drawSlime(cv, p);
+  return cv;
+}
+function descr(V, p) {
+  const d = [p.cor, p.chifre ? 'com chifre' : 'sem chifre', p.olhos === 2 ? 'dois olhos' : 'um olho'];
+  if (V.wings) d.push(p.asas ? 'com asas' : 'sem asas');
+  return d;
+}
+
+/* O que a aparência já diz de cada gene: V_ (uma maiúscula garantida), vv, Vv no roxo, __ quando a cor está escondida. */
+function pubGeno(V, p, i) {
+  const L = V.genes[i];
+  if (L === 'V') {
+    if (V.trans && p.cor === 'transparente') return '__';
+    if (V.inc) return p.cor === 'vermelho' ? 'VV' : p.cor === 'roxo' ? 'Vv' : 'vv';
+    return p.cor === 'vermelho' ? 'V_' : 'vv';
+  }
+  if (L === 'C') return p.chifre ? 'C_' : 'cc';
+  if (L === 'O') return p.olhos === 2 ? 'O_' : 'oo';
+  if (L === 'T') return p.cor === 'transparente' ? 'tt' : 'T_';
+  if (L === 'A') return p.asas ? 'aa' : 'A_';
+  return '__';
+}
+function geneOptions(V, p, i) {
+  const pub = pubGeno(V, p, i), L = V.genes[i], l = L.toLowerCase();
+  if (pub === '__') return V.inc ? [pub, L + L, L + l, l + l] : [pub, L + L, L + l, l + l];
+  if (pub.includes('_')) return [pub, L + L, L + l];
+  return [];
+}
+function trueGeno(V, c) {
+  return c.g.map((pair, i) => {
+    const L = V.genes[i], l = L.toLowerCase();
+    return pair.map(v => (v ? L : l)).sort().join('');
+  });
+}
+
+/* ---------- jogo ---------- */
+const $ = id => document.getElementById(id);
+const C = id => G.P.reg.get(id);
+const EPOCH = Date.UTC(2026, 9, 5);
+function today() {
+  const d = new Date();
+  const y = d.getFullYear(), m = d.getMonth(), dd = d.getDate();
+  return {
+    key: y + '-' + String(m + 1).padStart(2, '0') + '-' + String(dd).padStart(2, '0'),
+    n: Math.floor((Date.UTC(y, m, dd) - EPOCH) / 864e5) + 1,
+    dow: d.getDay(),
+  };
+}
+function load(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* sem armazenamento: segue sem salvar */ } }
+const SAVE = 'slime-dia3:';
+const STATS = 'slime-stats2';
+const GAME_URL = 'https://gugmt15.github.io/slime-do-dia/';
+
+let G = null;
+let fresh = new Set();
+
+function newGame(mode, V, seedStr, info, saved, mods) {
+  mods = Object.assign({}, NO_MODS, mods || {});
+  let P = makePuzzle(V, seedStr, mods);
+  for (let extra = 1; !P && extra < 20; extra++) P = makePuzzle(V, seedStr + '+' + extra, mods);
+  G = {
+    mode, V, seedStr, info, P, mods,
+    pop: P.starters.slice(),
+    labels: new Map(P.starters.map(s => [s.id, s.id])),
+    next: 1, crosses: [], sel: [], status: 'playing', reveal: false,
+    marks: Object.assign({}, (saved && saved.marks) || {}), focus: null,
+    dead: new Set(), fired: false, killed: 0, reason: '',
+  };
+  ((saved && saved.crosses) || []).forEach(([a, b]) => { if (G.status === 'playing') doCross(a, b, true); });
+  fresh = new Set();
+  render();
+}
+
+function usesOf(id) { let n = 0; G.crosses.forEach(c => { if (c.a === id || c.b === id) n++; }); return n; }
+function canBreed(id) { return !G.dead.has(id) && (!G.mods.aging || usesOf(id) < AGE_LIMIT); }
+function pairsLeft() {
+  const ok = G.pop.filter(c => canBreed(c.id));
+  for (let i = 0; i < ok.length; i++) for (let j = i + 1; j < ok.length; j++) {
+    const pk = pairKey(ok[i], ok[j]);
+    if (!G.crosses.some(c => pairKey(C(c.a), C(c.b)) === pk)) return true;
+  }
+  return false;
+}
+
+function doCross(aId, bId, silent) {
+  const a = C(aId), b = C(bId);
+  if (!a || !b) return;
+  const kids = litter(G.P, a, b);
+  kids.forEach(k => {
+    if (!G.labels.has(k.id)) { G.labels.set(k.id, String(G.next++)); G.pop.push(k); if (!silent) fresh.add(k.id); }
+  });
+  G.crosses.push({ a: aId, b: bId, kids: kids.map(k => k.id) });
+  if (kids.some(k => match(G.V, k.p, G.P.target))) { G.status = 'won'; }
+  else {
+    if (G.P.E && G.crosses.length === EVENT_AT && !G.fired) {
+      G.fired = true;
+      G.pop.forEach(c => { if (!G.dead.has(c.id) && killedBy(G.P.E, c.p)) { G.dead.add(c.id); G.killed++; } });
+    }
+    if (G.crosses.length >= G.V.max) { G.status = 'lost'; G.reason = 'Acabaram os cruzamentos.'; }
+    else if (!pairsLeft()) { G.status = 'lost'; G.reason = 'Não sobrou nenhum par que ainda possa cruzar.'; }
+  }
+  if (!silent) save();
+  if (G.mode === 'daily' && G.status !== 'playing') recordDaily();
+}
+
+function recordDaily() {
+  const st = load(STATS) || { days: {} };
+  if (st.days[G.seedStr]) return;
+  st.days[G.seedStr] = { won: G.status === 'won', n: G.crosses.length };
+  store(STATS, st);
+}
+function statsSummary() {
+  const st = load(STATS) || { days: {} };
+  const keys = Object.keys(st.days).sort();
+  const played = keys.length;
+  const wins = keys.filter(k => st.days[k].won).length;
+  const dist = {};
+  keys.forEach(k => { const d = st.days[k]; const b = d.won ? d.n : 'X'; dist[b] = (dist[b] || 0) + 1; });
+  const dayNum = k => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
+  let best = 0, run = 0, prev = null;
+  keys.forEach(k => {
+    const won = st.days[k].won, n = dayNum(k);
+    run = won ? (prev !== null && n - prev === 1 && run > 0 ? run + 1 : 1) : 0;
+    prev = n;
+    best = Math.max(best, run);
+  });
+  const last = keys[keys.length - 1];
+  const todayN = dayNum(today().key);
+  const current = last && st.days[last].won && todayN - dayNum(last) <= 1 ? run : 0;
+  return { played, wins, current, best, dist };
+}
+function statsBlock() {
+  const S = statsSummary();
+  const box = document.createElement('div'); box.className = 'stats';
+  const nums = document.createElement('div'); nums.className = 'stat-nums';
+  [[S.played, 'jogados'], [S.played ? Math.round(100 * S.wins / S.played) : 0, '% vitórias'], [S.current, 'sequência'], [S.best, 'melhor sequência']].forEach(([v, l]) => {
+    const it = document.createElement('div'); it.className = 'stat';
+    const b = document.createElement('b'); b.textContent = v;
+    const sp = document.createElement('span'); sp.textContent = l;
+    it.append(b, sp); nums.append(it);
+  });
+  const dist = document.createElement('div'); dist.className = 'dist';
+  const bins = [1, 2, 3, 4, 5, 6, 'X'];
+  const maxv = Math.max(1, ...bins.map(b => S.dist[b] || 0));
+  const mine = G.status === 'won' ? G.crosses.length : 'X';
+  bins.forEach(bn => {
+    const row = document.createElement('div'); row.className = 'drow';
+    const k = document.createElement('span'); k.className = 'dk'; k.textContent = bn;
+    const bar = document.createElement('span'); bar.className = 'dbar' + (String(bn) === String(mine) ? ' mine' : '');
+    const v = S.dist[bn] || 0;
+    bar.style.width = Math.max(8, 100 * v / maxv) + '%';
+    bar.textContent = v;
+    row.append(k, bar); dist.append(row);
+  });
+  const cap = document.createElement('p'); cap.className = 'stat-cap'; cap.textContent = 'Cruzamentos usados pra resolver, nos desafios do dia jogados neste navegador. Vale a primeira tentativa de cada dia.';
+  box.append(nums, dist, cap);
+  return box;
+}
+
+function save() {
+  if (G.mode === 'daily') store(SAVE + G.seedStr, { crosses: G.crosses.map(c => [c.a, c.b]), marks: G.marks });
+}
+
+function nameOf(id) {
+  if (G.labels.has(id)) return G.labels.get(id);
+  const c = C(id);
+  if (!c || !c.parents) return id;
+  return 'filhote de ' + lab(c.parents[0]) + ' × ' + lab(c.parents[1]);
+}
+function lab(id) { const s = nameOf(id); return /^\d+$/.test(s) ? '#' + s : s; }
+
+function render() {
+  const V = G.V, t = G.P.target;
+  if (G.mode === 'daily') {
+    $('sub').replaceChildren('nº ' + G.info.n + ' · ' + G.info.dia + ' · ');
+    const b = document.createElement('b'); b.textContent = V.nome; $('sub').append(b);
+    $('target-eyebrow').textContent = 'Alvo de hoje';
+  } else {
+    $('sub').textContent = 'treino · ' + V.nome;
+    $('target-eyebrow').textContent = 'Alvo';
+  }
+  $('btn-mode').textContent = G.mode === 'daily' ? 'Treino' : 'Desafio do dia';
+  $('trainbar').hidden = G.mode !== 'train';
+  $('btn-new-top').hidden = G.mode !== 'train';
+  $('variant').value = V.id;
+
+  drawSlime($('target-cv'), t);
+  $('target-name').textContent = 'Slime ' + descr(V, t).join(', ');
+  $('target-geno').replaceChildren(...V.genes.map((_, i) => geneTag(pubGeno(V, t, i))));
+
+  const E = G.P.E;
+  $('threat').hidden = !E;
+  $('target-geno').parentElement.hidden = !EASY;
+  $('btn-easy').setAttribute('aria-pressed', EASY ? 'true' : 'false');
+  if (E) $('threat-text').textContent = G.fired
+    ? E.who + ' passou depois do ' + EVENT_AT + 'º cruzamento: ' + (G.killed === 1 ? '1 slime não sobreviveu.' : G.killed + ' slimes não sobreviveram.')
+    : 'depois do ' + EVENT_AT + 'º cruzamento, ' + E.txt + '.';
+  $('threat').classList.toggle('done', G.fired);
+
+  $('rules').replaceChildren(...rulesOf(V).map(r => {
+    const e = document.createElement('div'); e.className = 'rule' + (r.novo ? ' new' : '');
+    const b = document.createElement('b'); b.textContent = r.t;
+    const l = document.createElement('span'); l.className = 'letters';
+    r.l.forEach(([code, meaning]) => { const it = document.createElement('span'); it.className = 'legend'; it.append(geneTag(code), ' ' + meaning); l.append(it); });
+    const d = document.createElement('span'); d.className = 'desc'; d.append(...withTags(r.s));
+    e.append(b, l, d); return e;
+  }));
+
+  renderTree();
+  $('pop-count').textContent = G.pop.length + ' slimes';
+  $('pips').replaceChildren(...Array.from({ length: V.max }, (_, i) => { const e = document.createElement('span'); e.className = 'pip' + (i < G.crosses.length ? ' used' : ''); return e; }));
+  renderBar();
+  renderEnd();
+  fresh = new Set();
+}
+
+function makeCard(c) {
+  const V = G.V, t = G.P.target;
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.dataset.id = c.id;
+  const dead = G.dead.has(c.id), u = usesOf(c.id);
+  const tired = G.mods.aging && u >= AGE_LIMIT;
+  b.className = 'slime' + (fresh.has(c.id) ? ' fresh' : '') + (match(V, c.p, t) ? ' hit' : '') + (dead ? ' dead' : tired ? ' tired' : '') + (G.focus === c.id ? ' focus' : '');
+  b.style.height = cardH() + 'px';
+  b.setAttribute('aria-pressed', G.sel.includes(c.id) ? 'true' : 'false');
+  b.setAttribute('aria-label', 'Slime ' + lab(c.id) + ': ' + descr(V, c.p).join(', ') + (dead ? ', morto' : G.mods.aging ? ', pode cruzar mais ' + (AGE_LIMIT - u) + ' vezes' : ''));
+  b.append(sprite(c.p));
+  const l = document.createElement('span'); l.className = 'lab'; l.textContent = lab(c.id); b.append(l);
+  const mk = G.marks[c.id] || {};
+  if (EASY) {
+    const m = document.createElement('span'); m.className = 'mark';
+    let first = true;
+    V.genes.forEach((_, i) => {
+      const pub = pubGeno(V, c.p, i);
+      const picked = mk[i] && mk[i] !== pub;
+      if (!EASY && !picked) return;
+      if (!first) m.append(' ');
+      first = false;
+      if (picked) { const s = document.createElement('span'); s.className = 'picked'; s.textContent = mk[i]; m.append(s); }
+      else m.append(pub);
+    });
+    b.append(m);
+  }
+  if (G.reveal) { const g = document.createElement('span'); g.className = 'geno'; g.textContent = trueGeno(V, c).join(' '); b.append(g); }
+  if (dead) { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = 'morto'; b.append(tg); }
+  else if (G.mods.aging) {
+    const us = document.createElement('span'); us.className = 'uses';
+    for (let k = 0; k < AGE_LIMIT; k++) { const i = document.createElement('i'); if (k < AGE_LIMIT - u) i.className = 'left'; us.append(i); }
+    b.append(us);
+  }
+  b.addEventListener('click', () => toggle(c.id));
+  return b;
+}
+
+function cardH() {
+  const marks = EASY;
+  return 74 + (marks ? 15 : 0) + (G.reveal ? 15 : 0) + (G.mods.aging || G.P.E ? 13 : 0);
+}
+
+/* Árvore: cada cruzamento é um nó com o número dele; os dois pais descem até ele, e dele saem os 4 filhotes. */
+function renderTree() {
+  const host = $('tree');
+  const relevant = new Set(G.sel);
+  if (G.focus) relevant.add(G.focus);
+  if (!window.dagre) { renderRows(host); return; }
+  const CW = 80, CH = cardH();
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({ rankdir: 'TB', nodesep: 10, ranksep: 30, edgesep: 8, marginx: 4, marginy: 4 });
+  g.setDefaultEdgeLabel(() => ({}));
+  G.P.starters.forEach(c => g.setNode(c.id, { width: CW, height: CH }));
+  G.crosses.forEach((cr, i) => {
+    const x = 'x' + i;
+    g.setNode(x, { width: 24, height: 24, cross: i });
+    g.setEdge(cr.a, x); g.setEdge(cr.b, x);
+    cr.kids.forEach(k => { g.setNode(k, { width: CW, height: CH }); g.setEdge(x, k); });
+  });
+  dagre.layout(g);
+  const gw = Math.ceil(g.graph().width), gh = Math.ceil(g.graph().height);
+  const canvas = document.createElement('div'); canvas.className = 'tree-canvas';
+  canvas.style.width = gw + 'px'; canvas.style.height = gh + 'px';
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('class', 'links'); svg.setAttribute('width', gw); svg.setAttribute('height', gh);
+  svg.setAttribute('viewBox', '0 0 ' + gw + ' ' + gh); svg.setAttribute('aria-hidden', 'true');
+  const hotCross = new Set();
+  G.crosses.forEach((cr, i) => { if (relevant.has(cr.a) || relevant.has(cr.b) || cr.kids.some(k => relevant.has(k))) hotCross.add('x' + i); });
+  const calm = [], hot = [];
+  g.edges().forEach(e => {
+    const pts = g.edge(e).points;
+    let d = 'M' + pts[0].x + ' ' + pts[0].y;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+      d += ' Q' + pts[i].x + ' ' + pts[i].y + ' ' + mx + ' ' + my;
+    }
+    const last = pts[pts.length - 1];
+    d += ' L' + last.x + ' ' + last.y;
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', d);
+    const isHot = hotCross.has(e.w) ? relevant.has(e.v) || G.crosses[+e.w.slice(1)].kids.some(k => relevant.has(k))
+      : hotCross.has(e.v) && (relevant.has(e.w) || relevant.has(G.crosses[+e.v.slice(1)].a) || relevant.has(G.crosses[+e.v.slice(1)].b));
+    if (isHot) { path.setAttribute('class', 'hot'); hot.push(path); } else calm.push(path);
+  });
+  svg.append(...calm, ...hot);
+  canvas.append(svg);
+  g.nodes().forEach(id => {
+    const n = g.node(id);
+    if (n.cross !== undefined) {
+      const x = document.createElement('div');
+      x.className = 'xnode' + (hotCross.has(id) ? ' hot' : '');
+      x.style.left = (n.x - 12) + 'px'; x.style.top = (n.y - 12) + 'px';
+      x.textContent = n.cross + 1;
+      x.title = (n.cross + 1) + 'º cruzamento';
+      canvas.append(x);
+    } else {
+      const card = makeCard(C(id));
+      card.style.left = (n.x - CW / 2) + 'px'; card.style.top = (n.y - CH / 2) + 'px';
+      canvas.append(card);
+    }
+  });
+  host.replaceChildren(canvas);
+}
+
+/* Reserva, se a biblioteca da árvore não carregar: uma linha por geração. */
+function renderRows(host) {
+  const genOf = new Map(G.P.starters.map(c => [c.id, 0]));
+  G.crosses.forEach(cr => { const g = Math.max(genOf.get(cr.a), genOf.get(cr.b)) + 1; cr.kids.forEach(id => genOf.set(id, g)); });
+  const max = Math.max(...genOf.values());
+  const box = document.createElement('div'); box.className = 'gens';
+  for (let g = 0; g <= max; g++) {
+    const row = document.createElement('div'); row.className = 'gen-row';
+    G.pop.filter(c => genOf.get(c.id) === g).forEach(c => row.append(makeCard(c)));
+    box.append(row);
+  }
+  host.replaceChildren(box);
+}
+
+function renderNoteBar() {
+  const bar = $('notebar');
+  if (!G.focus || !EASY) { bar.hidden = true; bar.replaceChildren(); return; }
+  const V = G.V, c = C(G.focus);
+  bar.hidden = false;
+  const title = document.createElement('span'); title.className = 'nb-title'; title.textContent = 'Genes de ' + lab(c.id) + ':';
+  const parts = [title];
+  V.genes.forEach((L, i) => {
+    const wrap = document.createElement('div'); wrap.className = 'gpick';
+    const nm = document.createElement('span'); nm.className = 'gname'; nm.textContent = GENE_NAMES[L]; wrap.append(nm);
+    const opts = geneOptions(V, c.p, i);
+    if (!opts.length) { const f = document.createElement('span'); f.className = 'fixed'; f.textContent = pubGeno(V, c.p, i); wrap.append(f); }
+    else {
+      const cur = (G.marks[c.id] || {})[i] || opts[0];
+      opts.forEach(o => {
+        const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = (o === opts[0] && !EASY) ? '?' : o;
+        btn.setAttribute('aria-pressed', o === cur ? 'true' : 'false');
+        btn.setAttribute('aria-label', GENE_NAMES[L] + ' de ' + lab(c.id) + ': ' + o);
+        btn.addEventListener('click', () => {
+          const m = G.marks[c.id] || (G.marks[c.id] = {});
+          if (o === opts[0]) delete m[i]; else m[i] = o;
+          if (!Object.keys(m).length) delete G.marks[c.id];
+          save(); render();
+        });
+        wrap.append(btn);
+      });
+    }
+    parts.push(wrap);
+  });
+  bar.replaceChildren(...parts);
+}
+
+function renderBar() {
+  renderNoteBar();
+  const btn = $('btn-cross'), msg = $('msg');
+  if (G.status !== 'playing') { btn.disabled = true; btn.textContent = 'Cruzar'; msg.textContent = G.status === 'won' ? 'Nasceu o alvo!' : G.reason; return; }
+  if (G.sel.length < 2) {
+    btn.disabled = true; btn.textContent = 'Cruzar';
+    msg.textContent = G.sel.length ? 'Escolhe mais um slime (' + lab(G.sel[0]) + ' selecionado).' : 'Toca em dois slimes pra cruzar.';
+    return;
+  }
+  const [a, b] = G.sel;
+  const pk = pairKey(C(a), C(b));
+  const done = G.crosses.some(c => pairKey(C(c.a), C(c.b)) === pk);
+  btn.textContent = 'Cruzar ' + lab(a) + ' × ' + lab(b);
+  btn.disabled = done;
+  msg.textContent = done ? 'Esse par já foi cruzado, e a ninhada é sempre a mesma. Escolhe outro par.' : 'Restam ' + (G.V.max - G.crosses.length) + ' cruzamentos.';
+}
+
+function shareText() {
+  const V = G.V, total = V.keys.length;
+  const sq = id => { const h = hits(V, C(id).p, G.P.target); return h === total ? '🟩' : h === total - 1 ? '🟨' : '⬜'; };
+  const extras = [G.mods.hard ? 'difícil' : '', G.mods.aging ? 'envelhecer' : '', G.mods.threat ? 'ameaça' : '', EASY ? 'easy' : ''].filter(Boolean);
+  const head = (G.mode === 'daily' ? 'Slime do Dia nº ' + G.info.n + ' (' + V.nome + ')' : 'Slime do Dia, treino (' + V.nome + ')') + ' ' + (G.status === 'won' ? G.crosses.length : 'X') + '/' + V.max + (extras.length ? ' · ' + extras.join(', ') : '');
+  return head + '\n' + G.crosses.map(c => c.kids.map(sq).join('')).join('\n') + '\n' + GAME_URL;
+}
+
+function renderEnd() {
+  const end = $('end');
+  if (G.status === 'playing') { end.hidden = true; end.replaceChildren(); return; }
+  end.hidden = false;
+  const h = document.createElement('h3');
+  const p = document.createElement('p');
+  if (G.status === 'won') {
+    h.textContent = 'Conseguiu em ' + G.crosses.length + (G.crosses.length === 1 ? ' cruzamento' : ' cruzamentos');
+    p.textContent = G.crosses.length <= G.P.par ? 'Isso é o mínimo possível pra este desafio.' : 'O mínimo possível era ' + G.P.par + '.';
+  } else {
+    h.textContent = 'Não foi dessa vez';
+    const steps = G.P.path.map((pr, i) => (i + 1) + ') ' + lab(pr[0]) + ' × ' + lab(pr[1]));
+    p.textContent = G.reason + ' Dava pra fazer em ' + G.P.par + ': ' + steps.join('   ');
+  }
+  const actions = document.createElement('div'); actions.className = 'actions';
+  const sh = document.createElement('button'); sh.type = 'button'; sh.className = 'btn primary'; sh.textContent = 'Copiar resultado';
+  const rv = document.createElement('button'); rv.type = 'button'; rv.className = 'btn';
+  rv.textContent = G.reveal ? 'Esconder genes' : 'Mostrar genes';
+  rv.addEventListener('click', () => { G.reveal = !G.reveal; render(); });
+  const box = document.createElement('textarea'); box.className = 'sharebox'; box.id = 'share-box'; box.readOnly = true; box.value = shareText(); box.hidden = true;
+  box.setAttribute('aria-label', 'Resultado pra compartilhar');
+  sh.addEventListener('click', () => {
+    const txt = shareText();
+    const fallback = () => { box.hidden = false; box.focus(); box.select(); sh.textContent = 'Selecionado, é só copiar'; };
+    try { navigator.clipboard.writeText(txt).then(() => { sh.textContent = 'Copiado'; }, fallback); } catch (e) { fallback(); }
+  });
+  actions.append(sh, rv);
+  if (G.mode === 'train') {
+    const nx = document.createElement('button'); nx.type = 'button'; nx.className = 'btn'; nx.textContent = 'Outro desafio';
+    nx.addEventListener('click', () => startTrain(G.V.id));
+    actions.append(nx);
+  }
+  end.replaceChildren(...[h, p, G.mode === 'daily' ? statsBlock() : null, actions, box].filter(Boolean));
+}
+
+function toggle(id) {
+  G.focus = id;
+  if (G.status !== 'playing' || !canBreed(id)) {
+    G.sel = G.sel.filter(s => s !== id);
+    render();
+    if (G.status === 'playing') $('msg').textContent = G.dead.has(id) ? lab(id) + ' morreu e não cruza mais.' : lab(id) + ' já cruzou ' + AGE_LIMIT + ' vezes e não cruza mais.';
+    return;
+  }
+  const i = G.sel.indexOf(id);
+  if (i >= 0) G.sel.splice(i, 1);
+  else { if (G.sel.length === 2) G.sel.shift(); G.sel.push(id); }
+  render();
+}
+
+$('btn-cross').addEventListener('click', () => {
+  if (G.sel.length !== 2 || G.status !== 'playing') return;
+  doCross(G.sel[0], G.sel[1], false);
+  G.sel = [];
+  render();
+  if (G.status !== 'playing') $('end').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+let resetArmed = null;
+$('btn-reset').addEventListener('click', e => {
+  if (!resetArmed) {
+    e.target.textContent = 'Toca de novo pra recomeçar';
+    resetArmed = setTimeout(() => { resetArmed = null; e.target.textContent = 'Recomeçar'; }, 3000);
+    return;
+  }
+  clearTimeout(resetArmed); resetArmed = null; e.target.textContent = 'Recomeçar';
+  if (G.mode === 'daily') store(SAVE + G.seedStr, { crosses: [], marks: {} });
+  newGame(G.mode, G.V, G.seedStr, G.info, null, G.mods);
+  window.scrollTo({ top: 0 });
+});
+
+function startDaily() {
+  const t = today();
+  const V = VARIANTS.classico;
+  newGame('daily', V, t.key, { n: t.n, dia: DIAS[t.dow] }, load(SAVE + t.key), NO_MODS);
+}
+function startTrain(vid) {
+  const mods = { aging: $('mod-aging').checked, threat: $('mod-threat').checked, hard: $('mod-hard').checked };
+  store('slime-mods', mods);
+  newGame('train', VARIANTS[vid] || VARIANTS.classico, 'treino-' + Math.floor(Math.random() * 1e9), null, null, mods);
+}
+
+$('variant').replaceChildren(...Object.values(VARIANTS).map(V => { const o = document.createElement('option'); o.value = V.id; o.textContent = V.nome + ' (' + V.max + ' cruzamentos)'; return o; }));
+$('variant').addEventListener('change', e => startTrain(e.target.value));
+$('btn-new').addEventListener('click', () => startTrain($('variant').value));
+$('btn-new-top').addEventListener('click', () => { startTrain($('variant').value); window.scrollTo({ top: 0 }); });
+$('mod-aging').addEventListener('change', () => startTrain($('variant').value));
+$('mod-threat').addEventListener('change', () => startTrain($('variant').value));
+$('mod-hard').addEventListener('change', () => startTrain($('variant').value));
+$('btn-easy').addEventListener('click', () => { EASY = !EASY; store('slime-easy', EASY); render(); });
+$('btn-mode').addEventListener('click', () => { if (G.mode === 'daily') startTrain(G.V.id); else startDaily(); window.scrollTo({ top: 0 }); });
+
+function boot(data) {
+  EASY = !!load('slime-easy');
+  const sm = load('slime-mods') || {};
+  $('mod-aging').checked = !!sm.aging; $('mod-threat').checked = !!sm.threat; $('mod-hard').checked = !!sm.hard;
+  if (data && data.mode === 'train' && data.seedStr && VARIANTS[data.vid]) newGame('train', VARIANTS[data.vid], data.seedStr, null, data, data.mods);
+  else startDaily();
+  if (!load('slime-visto')) { $('howto').open = true; store('slime-visto', true); }
+}
+boot({});
+</script>
+</body>
+</html>

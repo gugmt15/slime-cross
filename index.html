@@ -102,7 +102,7 @@ details.howto li { margin-bottom: 4px; }
 .threat b { color: var(--danger); flex: none; }
 .threat.done b { color: var(--muted); }
 
-.rules-box { display: flex; flex-direction: column; gap: 6px; }
+.rules-box .rules-lead { margin: 8px 0; }
 .rules-lead { margin: 0; font-size: 0.86rem; color: var(--muted); max-width: 70ch; }
 .rules-lead b { color: var(--ink); }
 .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 12px; }
@@ -351,10 +351,11 @@ img { max-width: 100%; }
     <div class="threat" id="threat"><b>Ameaça</b><span id="threat-text"></span></div>
   </section>
 
-  <section class="rules-box" aria-labelledby="h-rules">
-    <p class="rules-lead" id="h-rules">Cada slime tem <b>duas cópias</b> de cada gene, uma de cada pai. A <b>dominante</b> aparece; a <b>recessiva</b> fica escondida e pode voltar nos filhos.</p>
+  <details class="howto rules-box" id="rules-details">
+    <summary>Dominante e recessivo</summary>
+    <p class="rules-lead">Cada slime tem <b>duas cópias</b> de cada gene, uma de cada pai. A <b>dominante</b> aparece; a <b>recessiva</b> fica escondida e pode voltar nos filhos.</p>
     <div class="rules" id="rules"></div>
-  </section>
+  </details>
 
   <details class="howto" id="howto">
     <summary>Como jogar</summary>

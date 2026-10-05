@@ -7,7 +7,7 @@
 <meta name="description" content="Desafio diário de genética de Mendel: cruze slimes com genes escondidos até fazer nascer o alvo.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=Pixelify+Sans:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Pixelify+Sans:wght@500;700&display=swap">
 <style>
 /* Layout: caderno de laboratório quadriculado; alvo e ameaça no topo, árvore genealógica no meio, barra de anotar e cruzar presa embaixo. */
 :root {
@@ -75,6 +75,10 @@ button:focus-visible, summary:focus-visible, select:focus-visible { outline: 3px
 
 .trainbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--surface); border: 1px dashed var(--ink); border-radius: 8px; padding: 10px 12px; }
 .trainbar label { font-weight: 700; font-size: 0.9rem; }
+.trainhelp { flex: 1 1 100%; margin: 0; font-size: 0.85rem; color: var(--muted); }
+.trainhelp b { color: var(--ink); }
+details.howto ul { margin: 8px 0; padding-left: 1.2em; max-width: 65ch; }
+details.howto li { margin-bottom: 4px; }
 .trainbar .mods { display: flex; flex-wrap: wrap; gap: 4px 14px; flex: 1 1 100%; font-size: 0.88rem; }
 .trainbar .mods label { font-weight: 400; display: flex; gap: 6px; align-items: center; }
 .trainbar .mods input { accent-color: var(--accent); width: 16px; height: 16px; }
@@ -86,8 +90,8 @@ button:focus-visible, summary:focus-visible, select:focus-visible { outline: 3px
   background: var(--surface); border: 2px solid var(--ink); border-radius: 10px; padding: 14px 16px;
   box-shadow: 4px 4px 0 var(--ink);
 }
-.target .eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.target .tname { font-size: 1.3rem; font-weight: 700; line-height: 1.2; text-wrap: balance; }
+.target .eyebrow { display: inline-block; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--accent); color: var(--accent-ink); padding: 2px 8px; border-radius: 4px; margin-bottom: 4px; }
+.target .tname { font-size: 1.15rem; font-weight: 700; line-height: 1.2; text-wrap: balance; }
 .target .well { background: var(--well); border-radius: 8px; padding: 6px; }
 .target canvas { width: 96px; height: 96px; display: block; }
 .tgeno { margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
@@ -97,13 +101,23 @@ button:focus-visible, summary:focus-visible, select:focus-visible { outline: 3px
 .threat b { color: var(--danger); flex: none; }
 .threat.done b { color: var(--muted); }
 
+.rules-box { display: flex; flex-direction: column; gap: 6px; }
+.rules-lead { margin: 0; font-size: 0.86rem; color: var(--muted); max-width: 70ch; }
+.rules-lead b { color: var(--ink); }
 .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 12px; }
-.rule { font-size: 0.86rem; color: var(--muted); border-top: 2px solid var(--line); padding-top: 6px; min-width: 0; }
-.rule.new { border-top-color: var(--accent); }
-.rule b { color: var(--ink); display: block; font-size: 0.75rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
-.rule .letters { display: flex; flex-wrap: wrap; gap: 2px 12px; color: var(--ink); margin: 3px 0 2px; }
-.rule .legend { white-space: nowrap; }
-.rule .desc { display: block; }
+.winrow { border-top: 2px solid var(--line); padding-top: 6px; min-width: 0; font-size: 0.86rem; }
+.winrow.new { border-top-color: var(--accent); }
+.wr-title { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink); font-weight: 600; }
+.wr-pair { display: flex; align-items: flex-start; gap: 14px; margin: 4px 0; }
+.mini { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; }
+.mini canvas { width: 36px; height: 36px; display: block; }
+.mini figcaption { font-size: 0.8rem; font-weight: 700; display: flex; gap: 3px; align-items: center; white-space: nowrap; }
+.role { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; }
+.role.dom { background: var(--accent); color: var(--accent-ink); }
+.role.rec { color: var(--muted); border: 1px solid var(--line); }
+.mini .gene { font-size: 0.72rem; padding: 0 3px; }
+.wr-op { color: var(--muted); }
+.wr-note { margin: 0; color: var(--muted); }
 .gene, details.howto code, .tgeno code {
   font-family: var(--font-mono); font-weight: 600; font-size: 0.85em; color: var(--ink);
   border: 1.5px solid var(--ink); border-radius: 4px; background: var(--surface);
@@ -197,6 +211,44 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 .stat-cap { font-size: 0.75rem; color: var(--muted); }
 .sharebox { width: 100%; font-family: var(--font-mono); font-size: 0.85rem; min-height: 7em; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
 
+.home { align-items: center; text-align: center; padding-top: 24px; gap: 14px; }
+.home-title { font-size: 3rem; }
+.home-slime { width: 128px; height: 128px; }
+.home-tag { margin: 0; max-width: 34ch; color: var(--muted); }
+.home-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px; margin-top: 6px; }
+.bigbtn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; padding: 14px 16px; border-radius: 10px; border: 2px solid var(--ink); background: var(--surface); color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.bigbtn small { font-family: var(--font-body); font-size: 0.85rem; font-weight: 400; color: var(--muted); }
+.bigbtn.primary { background: var(--accent); border-color: var(--ink); color: var(--accent-ink); }
+.bigbtn.primary small { color: var(--accent-ink); opacity: 0.85; }
+.bigbtn.ghost { box-shadow: none; border-style: dashed; font-size: 1.1rem; }
+.bigbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.badge { position: absolute; top: -10px; right: 12px; font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; background: var(--danger); color: #ffffff; padding: 1px 8px; border-radius: 99px; }
+.btn.ghost { border-color: transparent; background: transparent; padding-inline: 4px; }
+.gamehead { align-items: center; }
+.gh-mid { flex: 1 1 auto; min-width: 0; }
+.gh-title { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; line-height: 1.1; }
+.tut { display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }
+.tut-text { font-size: 1.05rem; margin: 0; max-width: 60ch; }
+.tut-step-n { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.tut-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
+.tut-card { background: var(--surface); border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.tut-card.picked { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.tut-card canvas { width: 72px; height: 72px; }
+.tut-card .copies { display: flex; gap: 4px; }
+.copy { font-family: var(--font-mono); font-weight: 600; font-size: 0.85rem; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--ink); color: #ffffff; }
+.copy.red { background: #d6453d; }
+.copy.blue { background: #3f72d8; }
+.copy.unk { background: var(--well); color: var(--muted); border-style: dashed; }
+.tut-kids .tut-card { animation: hatch 380ms steps(4) both; }
+.tut-x { font-family: var(--font-display); font-size: 1.6rem; }
+.tut-say { background: var(--well); border-left: 4px solid var(--accent); border-radius: 6px; padding: 10px 14px; font-size: 1rem; margin: 0; max-width: 60ch; }
+.tut-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+@keyframes hatch { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tut-kids .tut-card { animation: none; } }
+.pinbar { position: fixed; left: 0; right: 0; top: 0; z-index: 3; background: var(--surface); border-bottom: 2px solid var(--ink); padding: calc(6px + env(safe-area-inset-top, 0px)) 16px 6px; }
+.pin-in { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 10px; font-size: 1.05rem; font-weight: 700; }
+.pin-in canvas { width: 52px; height: 52px; flex: none; }
+.pin-label { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background: var(--accent); color: var(--accent-ink); padding: 1px 6px; border-radius: 4px; }
 footer { font-size: 0.8rem; color: var(--muted); padding-bottom: 16px; max-width: 65ch; }
 [hidden] { display: none !important; }
 html { color-scheme: light; }
@@ -206,17 +258,40 @@ img { max-width: 100%; }
 </head>
 <body>
 
+<div class="wrap home" id="view-home">
+  <h1 class="home-title">Slime do Dia</h1>
+  <canvas id="home-cv" class="sprite home-slime" width="16" height="16" aria-hidden="true"></canvas>
+  <p class="home-tag">Cruze slimes, descubra os genes escondidos e faça nascer o slime do dia.</p>
+  <div class="home-btns">
+    <button class="bigbtn primary" id="go-daily" type="button">Desafio do dia<small id="daily-status">até 6 cruzamentos</small></button>
+    <button class="bigbtn" id="go-tut" type="button"><span class="badge" id="tut-badge">comece aqui</span>Tutorial<small>aprenda como funciona em um minuto</small></button>
+    <button class="bigbtn ghost" id="go-more" type="button">Mais opções<small>treino, outras versões e modos especiais</small></button>
+  </div>
+</div>
+
+<div class="wrap" id="view-tut" hidden>
+  <header class="gamehead">
+    <button class="btn ghost" id="tut-home" type="button">← Início</button>
+    <div class="gh-title">Tutorial</div>
+  </header>
+  <div id="tut-body" class="tut"></div>
+</div>
+
+<div id="view-game" hidden>
+<div class="pinbar" id="pinbar" hidden aria-hidden="true">
+  <div class="pin-in"><canvas id="pin-cv" class="sprite" width="16" height="16"></canvas><span class="pin-label">Alvo</span><span id="pin-name"></span></div>
+</div>
 <div class="wrap">
-  <header>
-    <div>
-      <h1>Slime do Dia</h1>
+  <header class="gamehead">
+    <button class="btn ghost" id="btn-home" type="button">← Início</button>
+    <div class="gh-mid">
+      <div class="gh-title">Slime do Dia</div>
       <div class="sub" id="sub">desafio de genética</div>
     </div>
     <div class="tools">
-      <button class="btn toggle" id="btn-easy" type="button" aria-pressed="false">Easy Mode</button>
       <button class="btn primary" id="btn-new-top" type="button" hidden>Novo desafio</button>
+      <button class="btn toggle" id="btn-easy" type="button" aria-pressed="false">Easy Mode</button>
       <button class="btn" id="btn-reset" type="button">Recomeçar</button>
-      <button class="btn" id="btn-mode" type="button">Treino</button>
     </div>
   </header>
 
@@ -224,9 +299,10 @@ img { max-width: 100%; }
     <label for="variant">Versão</label>
     <select id="variant"></select>
     <button class="btn" id="btn-new" type="button">Novo desafio</button>
+    <p class="trainhelp">Cada versão acrescenta uma regra: <b>Roxo</b>, vermelho com azul dá roxo; <b>Transparente</b>, um gene esconde a cor; <b>Quatro genes</b>, entram as asas e 7 cruzamentos; <b>Roxo e transparente</b>, as duas juntas. Os modos especiais deixam mais difícil:</p>
     <div class="mods" role="group" aria-label="Modos especiais">
       <label><input type="checkbox" id="mod-aging"> Envelhecer: cada slime cruza só 2 vezes</label>
-      <label><input type="checkbox" id="mod-threat"> Ameaça: o ambiente mata uma aparência depois do 2º cruzamento</label>
+      <label><input type="checkbox" id="mod-threat"> Ameaça: depois do 2º cruzamento, o ambiente mata os slimes de uma aparência (quem só esconde o traço escapa)</label>
       <label><input type="checkbox" id="mod-hard"> Difícil: o gene que o alvo pede pode estar escondido nos iniciais</label>
     </div>
   </div>
@@ -241,22 +317,20 @@ img { max-width: 100%; }
     <div class="threat" id="threat"><b>Ameaça</b><span id="threat-text"></span></div>
   </section>
 
-  <div class="rules" id="rules" aria-label="Regras de herança"></div>
+  <section class="rules-box" aria-labelledby="h-rules">
+    <p class="rules-lead" id="h-rules">Cada slime tem <b>duas cópias</b> de cada gene, uma de cada pai. A <b>dominante</b> aparece; a <b>recessiva</b> fica escondida e pode voltar nos filhos.</p>
+    <div class="rules" id="rules"></div>
+  </section>
 
   <details class="howto" id="howto">
     <summary>Como jogar</summary>
-    <p>Tu vê só a aparência dos slimes. Os genes ficam escondidos.</p>
-    <ol>
-      <li>Toca em dois slimes e aperta <b>Cruzar</b>. Nascem sempre 4 filhotes, nas proporções exatas de Mendel, gene por gene. O mesmo par dá sempre a mesma ninhada.</li>
-      <li>Cada slime tem duas cópias de cada gene, uma de cada pai. Cada gene tem uma letra: maiúscula é a versão dominante, minúscula a recessiva. Basta uma maiúscula pro traço dominante aparecer; o recessivo só aparece com as duas minúsculas.</li>
-      <li>Faz nascer o alvo antes de acabarem os cruzamentos.</li>
-    </ol>
-    <p><b>Easy Mode</b> mostra embaixo de cada slime e do alvo o que a aparência já entrega dos genes. <code>V_</code> quer dizer "tem um V, e a outra letra ainda não se sabe" (pode ser <code>VV</code> ou <code>Vv</code>); <code>__</code> quer dizer que pode ser qualquer coisa. No Easy Mode também dá pra tocar num slime e marcar, pela barra de baixo, as letras que tu deduziu dele. Sem o Easy Mode não aparece letra nenhuma: só os slimes.</p>
-    <p>O gene que o alvo pede sempre aparece à vista em algum slime inicial: se o alvo é sem chifre, algum dos iniciais já é sem chifre. Dá pra resolver só deduzindo.</p>
-    <p>No <b>Treino</b> tem três modos especiais. <b>Difícil</b>: o gene que o alvo pede pode estar escondido em slimes que não mostram ele, e aí é preciso caçar o portador. <b>Envelhecer</b>: cada slime cruza no máximo duas vezes. <b>Ameaça</b>: depois do 2º cruzamento, o ambiente mata os slimes de uma certa aparência, e a ameaça é anunciada no começo. Ela só enxerga a aparência: um slime vermelho que carrega azul escapa do gavião que caça azuis.</p>
-    <p>Slime não tem sexo: qualquer um cruza com qualquer outro, menos com ele mesmo.</p>
-    <p>O desafio do dia é sempre a versão clássica, com três genes e 6 cruzamentos.</p>
-    <p>No <b>Treino</b> dá pra escolher outras versões, cada uma com uma regra a mais de genética: <b>Roxo</b> (vermelho com azul dá roxo), <b>Transparente</b> (um gene esconde a cor), <b>Quatro genes</b> (com asas, 7 cruzamentos) e <b>Roxo e transparente</b> juntos (7 cruzamentos). Dá pra jogar quantas vezes quiser, com ou sem os modos especiais.</p>
+    <ul>
+      <li>Toca em dois slimes e aperta <b>Cruzar</b>. Nascem sempre 4 filhotes, e o mesmo par dá sempre a mesma ninhada.</li>
+      <li>Os filhotes entram na árvore e podem ser cruzados também. Tu tem 6 cruzamentos pra fazer nascer o alvo.</li>
+      <li>O que o alvo pede sempre aparece à vista em algum dos slimes iniciais. Dá pra resolver só deduzindo.</li>
+      <li><b>Easy Mode</b> mostra as letras dos genes embaixo de cada slime e deixa marcar palpites. <code>V_</code> quer dizer "tem um V, e a outra letra ainda não se sabe".</li>
+    </ul>
+    <button class="btn" id="btn-tut-again" type="button">Rever o tutorial</button>
   </details>
 
   <section aria-labelledby="h-pop">
@@ -279,6 +353,7 @@ img { max-width: 100%; }
     <button class="btn primary" id="btn-cross" type="button" disabled>Cruzar</button>
   </div>
 </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
 <script>
@@ -295,11 +370,11 @@ const VARIANTS = {
   mistura: { id: 'mistura', nome: 'Roxo e transparente', max: 7, inc: true, trans: true },
 };
 Object.values(VARIANTS).forEach(V => {
-  V.genes = ['V', 'C', 'O'].concat(V.trans ? ['T'] : [], V.wings ? ['A'] : []);
+  V.genes = ['V', 'C', 'E'].concat(V.trans ? ['T'] : [], V.wings ? ['A'] : []);
   V.keys = ['cor', 'chifre', 'olhos'].concat(V.wings ? ['asas'] : []);
 });
 const DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-const GENE_NAMES = { V: 'Cor', C: 'Chifre', O: 'Olhos', T: 'Transp.', A: 'Asas' };
+const GENE_NAMES = { V: 'Cor', C: 'Chifre', E: 'Olhos', T: 'Transp.', A: 'Asas' };
 
 const EVENTS = [
   { k: 'olhos', v: 1, txt: 'uma raposa come todo slime de um olho, que não vê ela chegando', who: 'A raposa' },
@@ -311,17 +386,49 @@ const EVENTS = [
   { k: 'asas', v: true, wings: true, txt: 'uma ventania leva embora todo slime de asa', who: 'A ventania' },
 ];
 
-/* Nas regras, {xx} marca um código de gene, que aparece como etiqueta e não como letra solta da frase. */
+/* Painel de regras: cada uma mostra o slime dominante e o recessivo, desenhados. {xx} marca código de gene. */
+const BASE_P = { cor: 'vermelho', chifre: false, olhos: 2 };
 function rulesOf(V) {
   const r = [];
-  r.push(V.inc
-    ? { t: 'Cor', l: [['V', 'vermelho'], ['v', 'azul']], s: 'Sem dominância: {VV} é vermelho, {Vv} é roxo, {vv} é azul.', novo: true }
-    : { t: 'Cor', l: [['V', 'vermelho'], ['v', 'azul']], s: 'Vermelho domina: {Vv} é vermelho e carrega azul escondido. Só {vv} é azul.' });
-  r.push({ t: 'Chifre', l: [['C', 'com chifre'], ['c', 'sem chifre']], s: 'Chifre domina: só {cc} nasce sem chifre.' });
-  r.push({ t: 'Olhos', l: [['O', 'dois olhos'], ['o', 'um olho']], s: 'Dois olhos domina: só {oo} nasce com um olho.' });
-  if (V.trans) r.push({ t: 'Transparência', l: [['T', 'normal'], ['t', 'transparente']], s: 'Só {tt} fica transparente, e aí a cor dele some da vista. Ela continua lá e passa pros filhos.', novo: true });
-  if (V.wings) r.push({ t: 'Asas', l: [['A', 'sem asa'], ['a', 'com asa']], s: 'Sem asa domina: só {aa} nasce com asas.', novo: true });
+  if (V.inc) {
+    r.push({ t: 'Cor', mix: true, figs: [[{ cor: 'vermelho' }, 'vermelho', 'VV'], [{ cor: 'roxo' }, 'roxo', 'Vv'], [{ cor: 'azul' }, 'azul', 'vv']],
+      s: 'Nenhuma é dominante: uma de cada dá roxo.', novo: true });
+  } else {
+    r.push({ t: 'Cor', dom: [{ cor: 'vermelho' }, 'vermelho', 'V'], rec: [{ cor: 'azul' }, 'azul', 'v'],
+      s: 'Só {vv} é azul. Um vermelho pode esconder azul.' });
+  }
+  r.push({ t: 'Chifre', dom: [{ chifre: true }, 'com chifre', 'C'], rec: [{ chifre: false }, 'sem chifre', 'c'],
+    s: 'Só {cc} nasce sem chifre.' });
+  r.push({ t: 'Olhos', dom: [{ olhos: 2 }, 'dois olhos', 'E'], rec: [{ olhos: 1 }, 'um olho', 'e'],
+    s: 'Só {ee} nasce com um olho.' });
+  if (V.trans) r.push({ t: 'Transparência', dom: [{}, 'normal', 'T'], rec: [{ cor: 'transparente' }, 'transparente', 't'],
+    s: 'Só {tt} fica transparente, e esconde a cor que carrega.', novo: true });
+  if (V.wings) r.push({ t: 'Asas', dom: [{ asas: false }, 'sem asa', 'A'], rec: [{ asas: true }, 'com asa', 'a'],
+    s: 'Só {aa} nasce com asas.', novo: true });
   return r;
+}
+function miniFig(spec, role) {
+  const [over, label, code] = spec;
+  const f = document.createElement('figure'); f.className = 'mini';
+  const cv = sprite(Object.assign({}, BASE_P, over)); f.append(cv);
+  const cap = document.createElement('figcaption'); cap.append(label + ' ', geneTag(code)); f.append(cap);
+  if (role) { const r = document.createElement('span'); r.className = 'role ' + role; r.textContent = role === 'dom' ? 'dominante' : 'recessivo'; f.append(r); }
+  return f;
+}
+function renderRules(V) {
+  return rulesOf(V).map(r => {
+    const e = document.createElement('div'); e.className = 'winrow' + (r.novo ? ' new' : '');
+    const t = document.createElement('div'); t.className = 'wr-title'; t.textContent = r.t;
+    const pair = document.createElement('div'); pair.className = 'wr-pair';
+    if (r.mix) {
+      r.figs.forEach((fg, i) => { if (i) { const sep = document.createElement('span'); sep.className = 'wr-op'; sep.textContent = i === 1 ? '·' : '·'; pair.append(sep); } pair.append(miniFig(fg)); });
+    } else {
+      pair.append(miniFig(r.dom, 'dom'), miniFig(r.rec, 'rec'));
+    }
+    const d = document.createElement('p'); d.className = 'wr-note'; d.append(...withTags(r.s));
+    e.append(t, pair, d);
+    return e;
+  });
 }
 function geneTag(txt) { const e = document.createElement('span'); e.className = 'gene'; e.textContent = txt; return e; }
 function withTags(text) {
@@ -520,7 +627,7 @@ function pubGeno(V, p, i) {
     return p.cor === 'vermelho' ? 'V_' : 'vv';
   }
   if (L === 'C') return p.chifre ? 'C_' : 'cc';
-  if (L === 'O') return p.olhos === 2 ? 'O_' : 'oo';
+  if (L === 'E') return p.olhos === 2 ? 'E_' : 'ee';
   if (L === 'T') return p.cor === 'transparente' ? 'tt' : 'T_';
   if (L === 'A') return p.asas ? 'aa' : 'A_';
   return '__';
@@ -646,7 +753,7 @@ function statsBlock() {
     it.append(b, sp); nums.append(it);
   });
   const dist = document.createElement('div'); dist.className = 'dist';
-  const bins = [1, 2, 3, 4, 5, 6, 'X'];
+  const bins = [2, 3, 4, 5, 6, 'X']; /* nenhum desafio sai em 1 cruzamento: o gerador exige pelo menos 2 */
   const maxv = Math.max(1, ...bins.map(b => S.dist[b] || 0));
   const mine = G.status === 'won' ? G.crosses.length : 'X';
   bins.forEach(bn => {
@@ -685,13 +792,14 @@ function render() {
     $('sub').textContent = 'treino · ' + V.nome;
     $('target-eyebrow').textContent = 'Alvo';
   }
-  $('btn-mode').textContent = G.mode === 'daily' ? 'Treino' : 'Desafio do dia';
   $('trainbar').hidden = G.mode !== 'train';
   $('btn-new-top').hidden = G.mode !== 'train';
   $('variant').value = V.id;
 
   drawSlime($('target-cv'), t);
   $('target-name').textContent = 'Slime ' + descr(V, t).join(', ');
+  drawSlime($('pin-cv'), t);
+  $('pin-name').textContent = descr(V, t).join(', ');
   $('target-geno').replaceChildren(...V.genes.map((_, i) => geneTag(pubGeno(V, t, i))));
 
   const E = G.P.E;
@@ -703,14 +811,7 @@ function render() {
     : 'depois do ' + EVENT_AT + 'º cruzamento, ' + E.txt + '.';
   $('threat').classList.toggle('done', G.fired);
 
-  $('rules').replaceChildren(...rulesOf(V).map(r => {
-    const e = document.createElement('div'); e.className = 'rule' + (r.novo ? ' new' : '');
-    const b = document.createElement('b'); b.textContent = r.t;
-    const l = document.createElement('span'); l.className = 'letters';
-    r.l.forEach(([code, meaning]) => { const it = document.createElement('span'); it.className = 'legend'; it.append(geneTag(code), ' ' + meaning); l.append(it); });
-    const d = document.createElement('span'); d.className = 'desc'; d.append(...withTags(r.s));
-    e.append(b, l, d); return e;
-  }));
+  $('rules').replaceChildren(...renderRules(V));
 
   renderTree();
   $('pop-count').textContent = G.pop.length + ' slimes';
@@ -987,14 +1088,118 @@ $('mod-aging').addEventListener('change', () => startTrain($('variant').value));
 $('mod-threat').addEventListener('change', () => startTrain($('variant').value));
 $('mod-hard').addEventListener('change', () => startTrain($('variant').value));
 $('btn-easy').addEventListener('click', () => { EASY = !EASY; store('slime-easy', EASY); render(); });
-$('btn-mode').addEventListener('click', () => { if (G.mode === 'daily') startTrain(G.V.id); else startDaily(); window.scrollTo({ top: 0 }); });
+
+
+let targetVisible = true;
+try {
+  new IntersectionObserver(es => { targetVisible = es[0].isIntersecting; updatePin(); }).observe(document.querySelector('.target'));
+} catch (e) { /* sem observador: o topo preso não aparece */ }
+function updatePin() { $('pinbar').hidden = targetVisible || $('view-game').hidden; }
+function show(view) {
+  ['home', 'tut', 'game'].forEach(v => { $('view-' + v).hidden = v !== view; });
+  window.scrollTo({ top: 0 });
+  updatePin();
+  if (view === 'home') renderHome();
+}
+function renderHome() {
+  drawSlime($('home-cv'), { cor: 'vermelho', chifre: true, olhos: 2 });
+  const t = today();
+  const st = load(STATS) || { days: {} };
+  const rec = st.days[t.key];
+  const sv = load(SAVE + t.key);
+  $('daily-status').textContent = rec ? (rec.won ? 'nº ' + t.n + ' · resolvido em ' + rec.n + ' ✓' : 'nº ' + t.n + ' · não foi dessa vez')
+    : sv && sv.crosses && sv.crosses.length ? 'nº ' + t.n + ' · em andamento' : 'nº ' + t.n + ' · até 6 cruzamentos';
+  $('tut-badge').hidden = !!load('slime-tut-feito');
+}
+
+/* ---------- tutorial: o experimento do Mendel, em três passos ---------- */
+const TUT_P = { chifre: false, olhos: 2 };
+function tutSlime(copies) { return { copies, p: Object.assign({}, TUT_P, { cor: copies.includes('V') ? 'vermelho' : 'azul' }) }; }
+const TUT = [
+  {
+    text: 'Todo slime tem duas cópias do gene da cor, uma que veio do pai e outra da mãe. Este vermelho tem duas cópias vermelhas. Este azul tem duas cópias azuis. O que nasce se cruzar os dois?',
+    parents: [tutSlime(['V', 'V']), tutSlime(['v', 'v'])],
+    kids: [tutSlime(['V', 'v']), tutSlime(['V', 'v']), tutSlime(['V', 'v']), tutSlime(['V', 'v'])],
+    say: 'Os quatro nasceram vermelhos! Cada filhote pegou uma cópia de cada pai: uma vermelha e uma azul. Vermelho é dominante e azul é recessivo, então o azul ficou escondido dentro deles.',
+  },
+  {
+    text: 'Agora cruza dois desses filhotes. Por fora são vermelhos, mas cada um esconde uma cópia azul.',
+    parents: [tutSlime(['V', 'v']), tutSlime(['V', 'v'])],
+    kids: [tutSlime(['V', 'V']), tutSlime(['V', 'v']), tutSlime(['v', 'V']), tutSlime(['v', 'v'])],
+    say: 'Nasceu um azul! Ele pegou a cópia azul escondida de cada pai. Um traço pode sumir numa geração e voltar na seguinte. Foi isso que o Mendel viu cruzando ervilhas.',
+  },
+];
+let tutStep = 0, tutDone = false;
+function tutCard(sl, picked) {
+  const c = document.createElement('div'); c.className = 'tut-card' + (picked ? ' picked' : '');
+  c.append(sprite(sl.p));
+  const cp = document.createElement('div'); cp.className = 'copies';
+  sl.copies.forEach(x => { const e = document.createElement('span'); e.className = 'copy ' + (x === '?' ? 'unk' : x === 'V' ? 'red' : 'blue'); e.textContent = x; cp.append(e); });
+  c.append(cp);
+  return c;
+}
+function startTutorial() { tutStep = 0; tutDone = false; renderTut(); }
+function renderTut() {
+  const body = $('tut-body');
+  const parts = [];
+  const n = document.createElement('div'); n.className = 'tut-step-n'; n.textContent = 'Passo ' + (tutStep + 1) + ' de 3';
+  parts.push(n);
+  if (tutStep < TUT.length) {
+    const S = TUT[tutStep];
+    const tx = document.createElement('p'); tx.className = 'tut-text'; tx.textContent = S.text; parts.push(tx);
+    const row = document.createElement('div'); row.className = 'tut-row';
+    row.append(tutCard(S.parents[0], true));
+    const x = document.createElement('span'); x.className = 'tut-x'; x.textContent = '×'; row.append(x);
+    row.append(tutCard(S.parents[1], true));
+    parts.push(row);
+    const act = document.createElement('div'); act.className = 'tut-actions';
+    if (!tutDone) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary'; b.textContent = 'Cruzar';
+      b.addEventListener('click', () => { tutDone = true; renderTut(); });
+      act.append(b); parts.push(act);
+    } else {
+      const kids = document.createElement('div'); kids.className = 'tut-row tut-kids';
+      S.kids.forEach((k, i) => { const c = tutCard(k, false); c.style.animationDelay = (i * 0.25) + 's'; kids.append(c); });
+      parts.push(kids);
+      const say = document.createElement('p'); say.className = 'tut-say'; say.textContent = S.say; parts.push(say);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary'; b.textContent = 'Próximo';
+      b.addEventListener('click', () => { tutStep++; tutDone = false; renderTut(); window.scrollTo({ top: 0 }); });
+      act.append(b); parts.push(act);
+    }
+  } else {
+    const tx = document.createElement('p'); tx.className = 'tut-text';
+    tx.textContent = 'No jogo tu não vê as cópias, só a aparência. Um slime vermelho pode ter duas cópias vermelhas, ou uma vermelha e uma azul escondida. Pra descobrir, olha os filhos que ele faz: se dois vermelhos tiverem um filho azul, os dois escondiam azul.';
+    parts.push(tx);
+    const row = document.createElement('div'); row.className = 'tut-row';
+    row.append(tutCard(tutSlime(['V', '?']), false), tutCard(tutSlime(['V', '?']), false));
+    parts.push(row);
+    const tx2 = document.createElement('p'); tx2.className = 'tut-text';
+    tx2.textContent = 'O chifre e os olhos funcionam igual: com chifre é dominante e sem chifre é recessivo; dois olhos é dominante e um olho é recessivo. No desafio tu tem 6 cruzamentos pra fazer nascer o slime alvo.';
+    parts.push(tx2);
+    const act = document.createElement('div'); act.className = 'tut-actions';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn primary'; b.textContent = 'Jogar o desafio do dia';
+    b.addEventListener('click', () => { startDaily(); show('game'); });
+    const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn'; b2.textContent = 'Voltar ao início';
+    b2.addEventListener('click', () => show('home'));
+    act.append(b, b2); parts.push(act);
+    store('slime-tut-feito', true);
+  }
+  body.replaceChildren(...parts);
+}
+
+$('go-daily').addEventListener('click', () => { startDaily(); show('game'); });
+$('go-tut').addEventListener('click', () => { startTutorial(); show('tut'); });
+$('go-more').addEventListener('click', () => { startTrain($('variant').value); show('game'); });
+$('btn-home').addEventListener('click', () => show('home'));
+$('tut-home').addEventListener('click', () => show('home'));
+$('btn-tut-again').addEventListener('click', () => { startTutorial(); show('tut'); });
 
 function boot(data) {
   EASY = !!load('slime-easy');
   const sm = load('slime-mods') || {};
   $('mod-aging').checked = !!sm.aging; $('mod-threat').checked = !!sm.threat; $('mod-hard').checked = !!sm.hard;
-  if (data && data.mode === 'train' && data.seedStr && VARIANTS[data.vid]) newGame('train', VARIANTS[data.vid], data.seedStr, null, data, data.mods);
-  else startDaily();
+  if (data && data.mode === 'train' && data.seedStr && VARIANTS[data.vid]) { newGame('train', VARIANTS[data.vid], data.seedStr, null, data, data.mods); show('game'); }
+  else show('home');
 }
 boot({});
 </script>

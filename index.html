@@ -995,7 +995,6 @@ function boot(data) {
   $('mod-aging').checked = !!sm.aging; $('mod-threat').checked = !!sm.threat; $('mod-hard').checked = !!sm.hard;
   if (data && data.mode === 'train' && data.seedStr && VARIANTS[data.vid]) newGame('train', VARIANTS[data.vid], data.seedStr, null, data, data.mods);
   else startDaily();
-  if (!load('slime-visto')) { $('howto').open = true; store('slime-visto', true); }
 }
 boot({});
 </script>

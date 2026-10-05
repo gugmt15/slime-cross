@@ -1,0 +1,788 @@
+<title>Bando de Slimes, protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;600&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+/* Layout: caderno de laboratório do Slime do Dia; no topo o dia, depois a luta do dia (fila contra fila), depois o curral, e embaixo o guia dos gatilhos. */
+:root {
+  --bg: #edf1ea;
+  --grid: #dce5d8;
+  --surface: #fafcf8;
+  --well: #e4ebe0;
+  --ink: #1c2620;
+  --muted: #56665b;
+  --line: #c6d2c2;
+  --accent: #4a8526;
+  --accent-ink: #ffffff;
+  --danger: #b4432f;
+  --foe: #8a3a2a;
+  --font-display: "Pixelify Sans", "Courier New", monospace;
+  --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101612; --grid: #17201a; --surface: #172019; --well: #223027;
+    --ink: #e2ebe3; --muted: #97a99c; --line: #2e3c33;
+    --accent: #8cc35a; --accent-ink: #0f1a10; --danger: #e8735c; --foe: #e89a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101612; --grid: #17201a; --surface: #172019; --well: #223027;
+  --ink: #e2ebe3; --muted: #97a99c; --line: #2e3c33;
+  --accent: #8cc35a; --accent-ink: #0f1a10; --danger: #e8735c; --foe: #e89a80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background-color: var(--bg); color: var(--ink);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  font-family: var(--font-body); font-size: 16px; line-height: 1.45;
+  padding-inline: 16px; padding-block: 16px 40px;
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-family: var(--font-display); font-size: 1.9rem; line-height: 1; margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; margin: 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+h2 small { font-family: var(--font-body); font-size: 0.82rem; font-weight: 400; color: var(--muted); }
+p { margin: 0; }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1.5px solid var(--ink); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 6px 12px; font-weight: 700; font-size: 0.9rem; }
+.btn:hover { background: var(--well); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.armed { background: var(--danger); border-color: var(--danger); color: #ffffff; }
+.btn.small { padding: 3px 9px; font-size: 0.82rem; }
+button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.day { font-family: var(--font-mono); font-size: 0.9rem; color: var(--muted); margin-top: 4px; }
+.top .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.note { font-size: 0.85rem; color: var(--muted); }
+.todo { display: flex; flex-wrap: wrap; gap: 6px; }
+.todo span { font-family: var(--font-mono); font-size: 0.75rem; border: 1px solid var(--line); background: var(--surface); border-radius: 4px; padding: 1px 7px; }
+.todo span.done { text-decoration: line-through; color: var(--muted); }
+
+.panel { background: var(--surface); border: 2px solid var(--ink); border-radius: 10px; padding: 14px; box-shadow: 4px 4px 0 var(--ink); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* filas */
+.lines { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: end; }
+.line { display: flex; gap: 4px; align-items: flex-end; min-width: 0; }
+.line.us { flex-direction: row-reverse; justify-content: flex-start; }
+.line.them { justify-content: flex-start; }
+.lines .vs { font-family: var(--font-display); font-size: 1.3rem; padding-bottom: 26px; }
+.lab { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.lab.foe { color: var(--foe); }
+.unit { width: 52px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 0.72rem; line-height: 1.15; text-align: center; border-radius: 6px; padding: 2px 0; background: transparent; border: 1.5px solid transparent; color: var(--ink); }
+.unit canvas { width: 40px; height: 40px; }
+.them .unit canvas { transform: scaleX(-1); }
+.unit .nm { font-weight: 700; max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.unit .hs { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.unit .fr { font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); min-height: 0.8rem; }
+@media (max-width: 600px) { .lines { grid-template-columns: minmax(0, 1fr); } .lines .vs { padding: 0; text-align: center; } }
+.unit.slot { border: 1.5px dashed var(--line); height: 86px; justify-content: center; color: var(--muted); }
+.unit.hl { border-color: var(--accent); background: var(--well); }
+.unit.hit { border-color: var(--danger); }
+.st { display: flex; gap: 2px; justify-content: center; min-height: 12px; }
+.st i { font-style: normal; font-family: var(--font-mono); font-size: 0.6rem; font-weight: 600; padding: 0 3px; border-radius: 3px; color: #ffffff; }
+.st .wet { background: #3f72d8; } .st .burn { background: #d6453d; } .st .zz { background: #6a5a8f; } .st .bl { background: #8a1f2e; }
+.order { font-size: 0.8rem; color: var(--muted); }
+.fightbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.msg { font-size: 0.95rem; min-height: 2.9em; background: var(--well); border-radius: 6px; padding: 8px 10px; }
+.msg b { color: var(--accent); }
+.result { font-family: var(--font-display); font-size: 1.3rem; }
+.recruit { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.recruit .row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* curral */
+.pen { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.card { text-align: left; background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; padding: 8px; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 2px 8px; align-items: start; color: var(--ink); min-width: 0; }
+.card:hover { border-color: var(--ink); }
+.card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.card.inline { border-style: solid; border-color: var(--accent); }
+.card.picked { border-color: #c08a1a; box-shadow: 0 0 0 2px #c08a1a; }
+.card canvas { width: 44px; height: 44px; grid-row: span 3; }
+.card .nm { font-weight: 700; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card .hs { font-family: var(--font-mono); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.card .tr { font-size: 0.72rem; color: var(--muted); line-height: 1.2; }
+.card .state { grid-column: 1 / -1; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.state.ready { color: var(--accent); } .state.tired { color: #6a5a8f; } .state.hurt { color: var(--danger); } .state.baby { color: #c08a1a; } .state.inline { color: var(--accent); }
+.dim { opacity: 0.6; }
+.detail { border-top: 2px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.detail .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; border: 1px solid var(--line); background: var(--well); border-radius: 4px; padding: 0 6px; }
+.geno { font-family: var(--font-mono); font-size: 0.8rem; }
+.odds { font-size: 0.86rem; display: flex; flex-direction: column; gap: 2px; }
+.odds b { font-weight: 700; }
+.ab-list { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.ab-list div b { font-family: var(--font-mono); font-size: 0.8rem; }
+details.guide { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+details.guide summary { font-weight: 700; cursor: pointer; }
+details.guide .ab-list { margin-top: 10px; }
+canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+canvas.bob { animation: bob 1.4s steps(2) infinite; }
+@keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+@media (prefers-reduced-motion: reduce) { canvas.bob { animation: none; } }
+footer { font-size: 0.82rem; color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Bando de Slimes</h1>
+      <div class="day" id="day"></div>
+    </div>
+    <div class="tools">
+      <button class="btn primary" id="btn-next" type="button">Avançar dia</button>
+      <button class="btn" id="btn-genes" type="button" aria-pressed="false">Mostrar genes</button>
+      <button class="btn" id="btn-reset" type="button">Recomeçar</button>
+    </div>
+  </div>
+  <div class="todo" id="todo"></div>
+
+  <section class="panel" aria-labelledby="h-fight">
+    <h2 id="h-fight">Luta do dia <small id="fight-sub"></small></h2>
+    <div class="lines">
+      <div><div class="lab">tua fila</div><div class="line us" id="line-us"></div></div>
+      <div class="vs">×</div>
+      <div><div class="lab foe" id="foe-lab">selvagens</div><div class="line them" id="line-them"></div></div>
+    </div>
+    <p class="order" id="order-hint"></p>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div class="fightbar">
+      <button class="btn primary" id="btn-fight" type="button">Lutar</button>
+      <button class="btn" id="btn-skip" type="button" hidden>Pular pro fim</button>
+      <button class="btn" id="btn-clear" type="button">Limpar fila</button>
+    </div>
+    <div class="recruit" id="recruit" hidden></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-pen">
+    <h2 id="h-pen">Curral <small id="pen-count"></small></h2>
+    <div class="fightbar">
+      <button class="btn" id="btn-breed" type="button">Cruzar</button>
+      <span class="note" id="breed-note"></span>
+    </div>
+    <div class="pen" id="pen"></div>
+    <div class="detail" id="detail" hidden></div>
+  </section>
+
+  <details class="guide" open>
+    <summary>Como funciona</summary>
+    <div class="ab-list">
+      <div>Cada dia: monte a fila com até 4 slimes prontos, lute uma vez, cruze um casal, e avance o dia. A luta é automática: os dois da frente se batem ao mesmo tempo, e quem desmaia sai da fila.</div>
+      <div>Quem lutou fica cansado no dia seguinte. Quem desmaiou fica ferido por dois dias. Por isso tu precisa de mais slimes do que cabem na fila.</div>
+      <div>O ovo choca no dia seguinte, e o bebê pode lutar com 2 dias de idade. Ele pega uma cópia de cada gene de cada pai, e um gene escondido nos dois pode aparecer.</div>
+      <div>Depois de vencer, tu pode levar um dos selvagens derrotados pro curral. É assim que entram genes novos.</div>
+      <div>Três vitórias sobem um nível: +1 de vida e +1 de ataque. O nível não passa pros filhos.</div>
+    </div>
+  </details>
+  <details class="guide">
+    <summary>Os gatilhos e os elementos</summary>
+    <div class="ab-list" id="guide"></div>
+  </details>
+  <footer>Protótipo pra testar a ideia. Os números ainda não foram balanceados. O progresso fica salvo só neste navegador.</footer>
+</div>
+
+<script>
+/* ---------- sorteio ---------- */
+function hashStr(s) { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; }
+function rngFrom(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const pickR = (r, arr) => arr[Math.floor(r() * arr.length)];
+
+/* ---------- genética ---------- */
+/* Cor: três alelos com dominância incompleta (o misturado fica no meio). Os outros: série de alelos, cada um domina os que vêm depois na ordem. */
+const GENE = {
+  cor: { al: ['R', 'B', 'Y'], w: [1, 1, 1] },
+  cab: { al: ['C', 'M', 'F', 'n'], w: [2, 1, 1, 3], dom: 'CMFn' },
+  cos: { al: ['E', 'n', 'A'], w: [2, 3, 1], dom: 'EnA' },
+  boca: { al: ['P', 'n', 'G'], w: [2, 3, 1], dom: 'PnG' },
+  olho: { al: ['D', 'u'], w: [3, 1], dom: 'Du' },
+};
+const GENE_NAMES = { cor: 'cor', cab: 'cabeça', cos: 'costas', boca: 'boca', olho: 'olhos' };
+function wpick(r, al, w) { const tot = w.reduce((a, b) => a + b, 0); let x = r() * tot; for (let i = 0; i < al.length; i++) { x -= w[i]; if (x < 0) return al[i]; } return al[al.length - 1]; }
+function wildGenes(r) { const g = {}; for (const k in GENE) g[k] = [wpick(r, GENE[k].al, GENE[k].w), wpick(r, GENE[k].al, GENE[k].w)]; return g; }
+function domOf(pair, order) { return order.indexOf(pair[0]) <= order.indexOf(pair[1]) ? pair[0] : pair[1]; }
+const COR = { BB: 'azul', RR: 'vermelho', YY: 'amarelo', BR: 'roxo', RY: 'laranja', BY: 'verde' };
+function phen(g) {
+  return {
+    cor: COR[g.cor.slice().sort().join('')],
+    topo: { C: 'chifre', M: 'cogumelo', F: 'folha', n: 'nada' }[domOf(g.cab, 'CMFn')],
+    costas: { E: 'espinhos', n: 'nada', A: 'asas' }[domOf(g.cos, 'EnA')],
+    boca: { P: 'presas', n: 'normal', G: 'bocão' }[domOf(g.boca, 'PnG')],
+    olhos: domOf(g.olho, 'Du') === 'D' ? 2 : 1,
+  };
+}
+const ELEM = { vermelho: ['fogo'], azul: ['água'], amarelo: ['raio'], roxo: ['água', 'fogo'], laranja: ['fogo', 'raio'], verde: ['água', 'raio'] };
+function abilities(p) {
+  const a = [];
+  if (p.topo !== 'nada') a.push(p.topo);
+  if (p.costas !== 'nada') a.push(p.costas);
+  if (p.boca !== 'normal') a.push(p.boca);
+  if (p.olhos === 1) a.push('mira');
+  return a;
+}
+function levelOf(xp) { return Math.min(5, 1 + Math.floor(xp / 3)); }
+function statsOf(g, lvl) {
+  const p = phen(g);
+  let hp = 4 + (lvl - 1), atk = 1 + (lvl - 1);
+  if (p.topo === 'chifre') atk += 1;
+  if (p.costas === 'espinhos') hp += 1;
+  if (p.boca === 'bocão') hp += 1;
+  return { hp, atk };
+}
+function genoText(g) { return Object.keys(GENE).map(k => g[k].join('')).join(' · '); }
+function childGenes(a, b) { const g = {}; for (const k in GENE) g[k] = [pickR(Math.random, a[k]), pickR(Math.random, b[k])]; return g; }
+/* chance de cada aparência no filhote: as 4 combinações de cada gene */
+function odds(a, b) {
+  const out = {};
+  for (const k in GENE) {
+    const cnt = {};
+    a[k].forEach(x => b[k].forEach(y => {
+      const g = { cor: ['R', 'R'], cab: ['n', 'n'], cos: ['n', 'n'], boca: ['n', 'n'], olho: ['D', 'D'] };
+      g[k] = [x, y];
+      const p = phen(g);
+      const v = k === 'cor' ? p.cor : k === 'cab' ? p.topo : k === 'cos' ? p.costas : k === 'boca' ? p.boca : (p.olhos === 2 ? 'dois olhos' : 'um olho');
+      cnt[v] = (cnt[v] || 0) + 25;
+    }));
+    out[k] = cnt;
+  }
+  return out;
+}
+
+const AB_TXT = {
+  chifre: ['Investida', 'Na frente da fila, o primeiro golpe dá dobrado. +1 de ataque.'],
+  cogumelo: ['Esporo', 'Quando apanha e não desmaia, quem bateu dorme e perde o próximo golpe. Se quem bateu for de fogo, os esporos explodem: 2 de dano nele.'],
+  folha: ['Fotossíntese', 'No fim de cada rodada, cura 1 do aliado da frente.'],
+  espinhos: ['Espinhos', 'Quem golpeia ele leva 1. +1 de vida.'],
+  asas: ['Voo', 'No começo da luta, voa por cima e acerta o último inimigo da fila.'],
+  presas: ['Mordida', 'Quem ele golpeia sangra: perde 1 no fim das próximas duas rodadas.'],
+  'bocão': ['Engolir', 'No começo da luta, engole o aliado logo atrás e cospe no último inimigo, com o ataque do cuspido +1. O cuspido sente os espinhos e o esporo do alvo. +1 de vida.'],
+  mira: ['Um olho', 'Toda vez que o aliado da frente golpeia, ele atira 1 no inimigo com menos vida.'],
+};
+const EL_TXT = [
+  ['Fogo', 'O golpe deixa queimando: 1 de dano no fim das próximas duas rodadas. Em alvo molhado, só seca.'],
+  ['Água', 'O golpe deixa molhado. Em alvo queimando, apaga o fogo.'],
+  ['Raio', 'Em alvo molhado, dano dobrado, e seca.'],
+  ['Cores misturadas', 'Roxo, laranja e verde têm dois elementos e alternam: um golpe de cada.'],
+];
+
+/* ---------- desenho dos slimes, todos no mesmo corpo de 20 por 20 ---------- */
+const K = '#1a1c2c', W = '#ffffff', BONE = '#efe4c4', BONE2 = '#bfae84';
+const PAL = {
+  vermelho: ['#d6453d', '#9b2b2e'], azul: ['#3f72d8', '#25458f'], amarelo: ['#e6be2a', '#a7841a'],
+  roxo: ['#9a4fd0', '#62308f'], laranja: ['#e8862c', '#a85a1a'], verde: ['#4fae4a', '#2e7a2e'],
+};
+const BODY = ['........KKKK........', '......KKLLLLKK......', '.....KLwwLLLLLK.....', '....KLwwLLLLLLLK....', '....KLLLLLLLLLLK....', '...KLLLLLLLLLLLLK...', '...KLLLLLLLLLLLLK...', '...KLLLLLLLLLLLLK...', '...KlLLLLLLLLLLlK...', '...KllLLLLLLLLllK...', '....KKKKKKKKKKKK....'];
+const WING = [[0, 3, 'K'], [0, 4, 'K'], [1, 4, 'K'], [0, 5, 'K'], [1, 5, 'F'], [2, 5, 'K'], [0, 6, 'K'], [1, 6, 'F'], [2, 6, 'F'], [3, 6, 'K'], [0, 7, 'K'], [1, 7, 'F'], [2, 7, 'f'], [0, 8, 'K'], [1, 8, 'f'], [2, 8, 'K'], [1, 9, 'K']];
+function drawSlime(cv, p, mood) {
+  const x = cv.getContext('2d');
+  x.clearRect(0, 0, 20, 20);
+  const put = (c, X, Y) => { x.fillStyle = c; x.fillRect(X, Y, 1, 1); };
+  const col = PAL[p.cor];
+  if (p.costas === 'asas') WING.forEach(([X, Y, c]) => { const k = c === 'K' ? K : c === 'F' ? '#eef3ff' : '#b7c3df'; put(k, X, Y + 4); put(k, 19 - X, Y + 4); });
+  if (p.costas === 'espinhos') [[6, 8], [13, 8], [3, 12], [16, 12], [4, 10], [15, 10]].forEach(([X, Y]) => { put(BONE, X, Y); put(K, X + (X < 10 ? -1 : 1), Y - 1); });
+  BODY.forEach((row, i) => { for (let X = 0; X < 20; X++) { const ch = row[X], Y = 8 + i; if (ch === 'L') put(col[0], X, Y); else if (ch === 'l') put(col[1], X, Y); else if (ch === 'K') put(K, X, Y); else if (ch === 'w') put(W, X, Y); } });
+  if (mood === 'zz') {
+    if (p.olhos === 1) { for (let X = 8; X <= 11; X++) put(K, X, 13); }
+    else { put(K, 6, 13); put(K, 7, 13); put(K, 12, 13); put(K, 13, 13); }
+  } else if (p.olhos === 1) {
+    for (let X = 8; X <= 11; X++) for (let Y = 12; Y <= 14; Y++) put(W, X, Y);
+    [[9, 13], [10, 13], [9, 14], [10, 14]].forEach(([X, Y]) => put(K, X, Y));
+  } else {
+    [[7, 13], [7, 14], [12, 13], [12, 14]].forEach(([X, Y]) => put(K, X, Y));
+  }
+  if (p.boca === 'presas') { for (let X = 8; X <= 11; X++) put(K, X, 16); put(W, 8, 17); put(W, 11, 17); }
+  if (p.boca === 'bocão') { for (let X = 7; X <= 12; X++) put(K, X, 16); put(K, 8, 17); put(K, 11, 17); put('#c0394a', 9, 17); put('#c0394a', 10, 17); }
+  if (p.topo === 'chifre') { put(K, 10, 5); put(K, 9, 6); put(BONE, 10, 6); put(K, 11, 6); put(K, 8, 7); put(BONE, 9, 7); put(BONE, 10, 7); put(K, 11, 7); put(BONE, 9, 8); put(BONE2, 10, 8); }
+  if (p.topo === 'folha') { put('#2e5a24', 9, 7); put('#2e5a24', 9, 6); [[10, 6], [10, 5], [11, 5], [11, 4], [12, 4], [12, 3], [11, 6], [8, 5], [7, 5]].forEach(([X, Y]) => put('#4fae4a', X, Y)); put('#2e7a2e', 11, 5); put('#2e7a2e', 12, 4); put('#2e7a2e', 8, 6); }
+  if (p.topo === 'cogumelo') { for (let X = 8; X <= 11; X++) put('#d6453d', X, 3); for (let X = 7; X <= 12; X++) { put('#d6453d', X, 4); put('#b23a33', X, 5); } put(W, 8, 4); put(W, 11, 3); put(W, 12, 4); put(BONE, 9, 6); put(BONE, 10, 6); put(BONE, 9, 7); put(BONE, 10, 7); }
+}
+function sprite(p, size, cls, mood) {
+  const cv = document.createElement('canvas');
+  cv.width = 20; cv.height = 20;
+  cv.className = 'px' + (cls ? ' ' + cls : '');
+  if (size) { cv.style.width = size + 'px'; cv.style.height = size + 'px'; }
+  cv.style.animationDelay = (-Math.random() * 1.4).toFixed(2) + 's';
+  drawSlime(cv, p, mood);
+  return cv;
+}
+function eggSprite(size) {
+  const cv = document.createElement('canvas'); cv.width = 20; cv.height = 20; cv.className = 'px';
+  if (size) { cv.style.width = size + 'px'; cv.style.height = size + 'px'; }
+  const x = cv.getContext('2d');
+  const EGG = ['......KKKKKK......', '....KKccccccKK....', '...KccccccsccccK..', '..KccsccccccccK...', '..KccccccccsccK...', '.KcccccccccccccK..', '.KcsccccccccccccK.', '.KccccccscccccK...', '..KccccccccccK....', '...KKccccccKK.....', '.....KKKKKK.......'];
+  EGG.forEach((row, Y) => { for (let X = 0; X < row.length; X++) { const ch = row[X]; if (ch === '.') continue; x.fillStyle = ch === 'K' ? K : ch === 's' ? '#e8862c' : '#f6efd8'; x.fillRect(X + 1, Y + 6, 1, 1); } });
+  return cv;
+}
+
+/* ---------- estado ---------- */
+const SAVE = 'bando-proto-1';
+const LINE_MAX = 4, PEN_MAX = 8, ADULT_AGE = 2;
+const NAMES = ['Brasa', 'Pingo', 'Faísca', 'Musgo', 'Gota', 'Trovão', 'Bolota', 'Cacau', 'Neblina', 'Pimenta', 'Quiabo', 'Tapioca', 'Jabuti', 'Granizo', 'Caju', 'Fuligem', 'Paçoca', 'Sereno', 'Pitanga', 'Jiló', 'Mandu', 'Coral', 'Orvalho', 'Taioba', 'Biju', 'Cuscuz', 'Graveto', 'Pururuca'];
+const WILD_NAMES = ['Lodo', 'Breu', 'Cardo', 'Urtiga', 'Sarna', 'Vespa', 'Gosma', 'Tojo', 'Limo', 'Brejo', 'Cinza', 'Mofo', 'Lama', 'Sapé', 'Tiririca', 'Carrapicho'];
+let S = null;
+let ui = { sel: null, breed: false, picks: [], fight: null, timer: null, releaseArmed: null, resetArmed: null };
+
+function freshName() {
+  const used = new Set(S.slimes.map(s => s.name));
+  const free = NAMES.filter(n => !used.has(n));
+  return free.length ? pickR(Math.random, free) : 'Slime ' + S.nextId;
+}
+function newGame() {
+  S = { day: 1, slimes: [], egg: null, line: [], fought: false, bred: false, recruit: null, last: null, nextId: 1, showGenes: false, wins: 0, losses: 0 };
+  const r = rngFrom(Date.now() >>> 0);
+  for (let i = 0; i < 6; i++) S.slimes.push({ id: S.nextId++, name: freshName(), g: wildGenes(r), xp: 0, born: -5, rest: 0, hurt: false, parents: null, wild: true });
+}
+function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) { /* sem armazenamento: segue sem salvar */ } }
+function load() { try { const v = localStorage.getItem(SAVE); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+const byId = id => S.slimes.find(s => s.id === id);
+const age = s => S.day - s.born;
+const isAdult = s => age(s) >= ADULT_AGE;
+const isReady = s => isAdult(s) && s.rest === 0;
+
+/* inimigos do dia: os mesmos pra qualquer jogador no mesmo dia */
+function enemiesOf(day) {
+  const r = rngFrom(hashStr('selvagens:' + day));
+  const boss = day % 7 === 0;
+  const n = boss ? 4 : day <= 2 ? 2 : day <= 4 ? 3 : 4;
+  const lvl = Math.min(5, 1 + Math.floor((day - 1) / 3) + (boss ? 1 : 0));
+  const names = WILD_NAMES.slice();
+  return Array.from({ length: n }, (_, i) => {
+    const k = Math.floor(r() * names.length);
+    const name = names.splice(k, 1)[0];
+    return { id: 'w' + i, name, g: wildGenes(r), lvl };
+  });
+}
+
+/* ---------- luta ---------- */
+function mkUnit(def, side, i) {
+  const p = phen(def.g);
+  const st = statsOf(def.g, def.lvl);
+  return { k: side + i, side, name: def.name, p, hp: st.hp, max: st.hp, atk: st.atk, ab: abilities(p), el: ELEM[p.cor], ei: 0, wet: false, burn: 0, sleep: 0, bleed: 0, first: true, ref: def.id };
+}
+function fight(usDefs, themDefs) {
+  const A = usDefs.map((d, i) => mkUnit(d, 'us', i)), B = themDefs.map((d, i) => mkUnit(d, 'them', i));
+  const all = A.concat(B);
+  let LA = A.slice(), LB = B.slice();
+  const frames = [];
+  const clone = u => ({ k: u.k, name: u.name, p: u.p, hp: Math.max(0, u.hp), max: u.max, atk: u.atk, wet: u.wet, burn: u.burn, sleep: u.sleep, bleed: u.bleed });
+  const snap = (msg, hl, hit) => frames.push({ msg, us: LA.map(clone), them: LB.map(clone), hl: hl || [], hit: hit || [] });
+  const foesOf = u => (u.side === 'us' ? LB : LA);
+  const alliesOf = u => (u.side === 'us' ? LA : LB);
+  const tag = u => (u.side === 'them' ? u.name + ' (selvagem)' : u.name);
+  function nextElem(u) { if (!u.el.length) return null; const e = u.el[u.ei % u.el.length]; u.ei++; return e; }
+  function hit(att, tgt, dmg, kind, notes) {
+    const e = kind === 'tiro' ? null : nextElem(att);
+    let d = dmg;
+    if (e === 'raio' && tgt.wet) { d *= 2; tgt.wet = false; notes.push('<b>molhado conduz o raio: dano dobrado</b>'); }
+    tgt.hp -= d;
+    if (e === 'água') { if (tgt.burn > 0) { tgt.burn = 0; notes.push('a água apaga o fogo'); } else tgt.wet = true; }
+    if (e === 'fogo') { if (tgt.wet) { tgt.wet = false; notes.push('o fogo só seca a água'); } else tgt.burn = 2; }
+    if (kind === 'golpe' || kind === 'cuspe') {
+      if (tgt.ab.includes('espinhos')) { att.hp -= 1; notes.push('<b>espinhos: ' + att.name + ' leva 1</b>'); }
+      if (tgt.ab.includes('cogumelo') && tgt.hp > 0) {
+        if (e === 'fogo') { att.hp -= 2; notes.push('<b>fogo nos esporos: explosão, ' + att.name + ' leva 2</b>'); }
+        else { att.sleep = 1; notes.push('<b>esporo: ' + att.name + ' dorme</b>'); }
+      }
+    }
+    if (kind === 'golpe' && att.ab.includes('presas')) tgt.bleed = 2;
+    return { d, e };
+  }
+  const elName = e => (e ? ' de ' + e : '');
+  function cleanup() {
+    const dead = all.filter(u => u.hp <= 0 && !u.out);
+    dead.forEach(u => { u.out = true; });
+    LA = LA.filter(u => u.hp > 0); LB = LB.filter(u => u.hp > 0);
+    if (dead.length) snap(dead.map(tag).join(' e ') + (dead.length > 1 ? ' desmaiam.' : ' desmaia.'), [], dead.map(u => u.k));
+  }
+  snap('Começa a luta.');
+  /* começo da luta: voo e engolir, na ordem da fila, alternando os lados */
+  for (let i = 0; i < LINE_MAX; i++) {
+    for (const side of [A, B]) {
+      const u = side[i];
+      if (!u || u.hp <= 0) continue;
+      if (u.ab.includes('asas')) {
+        const foes = foesOf(u); if (!foes.length) continue;
+        const t = foes[foes.length - 1], notes = [];
+        const r = hit(u, t, u.atk, 'voo', notes);
+        snap(tag(u) + ' voa por cima e acerta ' + tag(t) + ' lá atrás: ' + r.d + elName(r.e) + '. ' + notes.join('; '), [u.k], [t.k]);
+        cleanup();
+      }
+      if (u.ab.includes('bocão') && u.hp > 0) {
+        const al = alliesOf(u), idx = al.indexOf(u), behind = idx >= 0 ? al[idx + 1] : null, foes = foesOf(u);
+        if (behind && foes.length) {
+          const t = foes[foes.length - 1], notes = [];
+          const r = hit(behind, t, behind.atk + 1, 'cuspe', notes);
+          snap('<b>' + tag(u) + ' engole ' + behind.name + ' e cospe em ' + tag(t) + '</b>: ' + r.d + elName(r.e) + '. ' + notes.join('; '), [u.k, behind.k], [t.k]);
+          cleanup();
+        }
+      }
+    }
+  }
+  let round = 0;
+  while (LA.length && LB.length && round < 30) {
+    round++;
+    const a = LA[0], b = LB[0];
+    for (const [att, tgt] of [[a, b], [b, a]]) {
+      if (att.out) continue;
+      if (att.sleep > 0) { att.sleep--; snap(tag(att) + ' está dormindo e não golpeia.', [att.k]); continue; }
+      const dmg = att.atk * (att.ab.includes('chifre') && att.first ? 2 : 1);
+      const inv = att.ab.includes('chifre') && att.first;
+      att.first = false;
+      const notes = [];
+      const r = hit(att, tgt, dmg, 'golpe', notes);
+      snap((inv ? '<b>Investida!</b> ' : '') + tag(att) + ' golpeia ' + tag(tgt) + ': ' + r.d + elName(r.e) + '. ' + notes.join('; '), [att.k], [tgt.k]);
+      alliesOf(att).slice(1).filter(m => m.ab.includes('mira') && m.hp > 0).forEach(m => {
+        const foes = foesOf(m).filter(f => f.hp > 0); if (!foes.length) return;
+        const t = foes.reduce((x, y) => (y.hp < x.hp ? y : x));
+        const n2 = [];
+        hit(m, t, 1, 'tiro', n2);
+        snap(tag(m) + ' mira com o olho só e acerta ' + tag(t) + ': 1.', [m.k], [t.k]);
+      });
+    }
+    cleanup();
+    if (!LA.length || !LB.length) break;
+    /* fim da rodada: fogo, sangue e folha */
+    const ev = [];
+    LA.concat(LB).forEach(u => {
+      if (u.burn > 0) { u.hp -= 1; u.burn--; ev.push(u.name + ' queima: 1'); }
+      if (u.bleed > 0) { u.hp -= 1; u.bleed--; ev.push(u.name + ' sangra: 1'); }
+    });
+    [LA, LB].forEach(L => L.forEach(u => {
+      if (u.ab.includes('folha') && u.hp > 0 && L[0] && L[0].hp > 0 && L[0].hp < L[0].max) { L[0].hp += 1; ev.push(u.name + ' cura ' + L[0].name + ': 1'); }
+    }));
+    if (ev.length) snap('Fim da rodada ' + round + ': ' + ev.join('; ') + '.');
+    cleanup();
+  }
+  const outcome = LA.length && !LB.length ? 'win' : !LA.length && LB.length ? 'loss' : 'draw';
+  snap(outcome === 'win' ? 'Vitória!' : outcome === 'loss' ? 'Derrota.' : 'Empate depois de 30 rodadas: conta como derrota.');
+  return { frames, outcome, fainted: A.filter(u => u.hp <= 0).map(u => u.ref), rounds: round };
+}
+
+/* ---------- ações do dia ---------- */
+function lineDefs() { return S.line.map(byId).filter(Boolean).map(s => ({ id: s.id, name: s.name, g: s.g, lvl: levelOf(s.xp) })); }
+function startFight() {
+  if (S.fought || !S.line.length || ui.fight) return;
+  const res = fight(lineDefs(), enemiesOf(S.day));
+  ui.fight = { res, i: 0 };
+  S.fought = true;
+  /* consequências aplicadas já, pra não depender de assistir até o fim */
+  const won = res.outcome === 'win';
+  S.line.forEach(id => {
+    const s = byId(id); if (!s) return;
+    if (res.fainted.includes(id)) { s.rest = 2; s.hurt = true; }
+    else { s.rest = 1; s.hurt = false; if (won) s.xp += 1; }
+  });
+  if (won) { S.wins++; S.recruit = enemiesOf(S.day).map(e => e.id); } else S.losses++;
+  S.last = { outcome: res.outcome, rounds: res.rounds };
+  save();
+  play();
+}
+function play() {
+  clearTimeout(ui.timer);
+  const f = ui.fight; if (!f) return;
+  renderFight();
+  if (f.i < f.res.frames.length - 1) {
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    ui.timer = setTimeout(() => { f.i++; play(); }, reduce ? 350 : 900);
+  } else {
+    ui.timer = null;
+    renderAll();
+  }
+}
+function skipFight() { if (!ui.fight) return; clearTimeout(ui.timer); ui.fight.i = ui.fight.res.frames.length - 1; play(); }
+
+function nextDay() {
+  clearTimeout(ui.timer);
+  ui.fight = null; ui.breed = false; ui.picks = [];
+  S.day++;
+  S.slimes.forEach(s => { if (s.rest > 0) s.rest--; if (s.rest === 0) s.hurt = false; });
+  if (S.egg) {
+    const e = S.egg;
+    S.slimes.push({ id: S.nextId++, name: freshName(), g: e.g, xp: 0, born: S.day, rest: 0, hurt: false, parents: e.parents, wild: false });
+    S.egg = null;
+  }
+  S.fought = false; S.bred = false; S.recruit = null; S.last = null;
+  S.line = S.line.filter(id => { const s = byId(id); return s && isReady(s); });
+  save();
+  renderAll();
+}
+function penFull() { return S.slimes.length + (S.egg ? 1 : 0) >= PEN_MAX; }
+function doBreed() {
+  const [a, b] = ui.picks.map(byId);
+  if (!a || !b || S.bred || penFull()) return;
+  S.egg = { g: childGenes(a.g, b.g), parents: [a.name, b.name] };
+  S.bred = true;
+  ui.breed = false; ui.picks = [];
+  save(); renderAll();
+}
+function recruit(eid) {
+  if (!S.recruit || penFull()) return;
+  const e = enemiesOf(S.day).find(x => x.id === eid);
+  if (!e) return;
+  S.slimes.push({ id: S.nextId++, name: e.name, g: e.g, xp: 0, born: S.day - ADULT_AGE, rest: 1, hurt: false, parents: null, wild: true });
+  S.recruit = null;
+  save(); renderAll();
+}
+function release(id) {
+  S.slimes = S.slimes.filter(s => s.id !== id);
+  S.line = S.line.filter(x => x !== id);
+  ui.sel = null;
+  save(); renderAll();
+}
+function toggleLine(id) {
+  const s = byId(id); if (!s || S.fought) return;
+  const i = S.line.indexOf(id);
+  if (i >= 0) S.line.splice(i, 1);
+  else if (isReady(s) && S.line.length < LINE_MAX) S.line.push(id);
+  save(); renderAll();
+}
+function moveInLine(id, dir) {
+  const i = S.line.indexOf(id), j = i + dir;
+  if (i < 0 || j < 0 || j >= S.line.length || S.fought) return;
+  [S.line[i], S.line[j]] = [S.line[j], S.line[i]];
+  save(); renderAll();
+}
+
+/* ---------- tela ---------- */
+const $ = id => document.getElementById(id);
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+function stChips(u) {
+  const st = el('div', 'st');
+  if (u.wet) st.append(el('i', 'wet', 'água'));
+  if (u.burn) st.append(el('i', 'burn', 'fogo'));
+  if (u.sleep) st.append(el('i', 'zz', 'zz'));
+  if (u.bleed) st.append(el('i', 'bl', 'sangue'));
+  return st;
+}
+function unitEl(u, hl, hit, onClick, front) {
+  const b = el(onClick ? 'button' : 'div', 'unit' + (hl ? ' hl' : '') + (hit ? ' hit' : ''));
+  if (onClick) { b.type = 'button'; b.addEventListener('click', onClick); }
+  b.append(el('span', 'fr', front ? 'frente' : ''));
+  b.append(sprite(u.p, 40, u.sleep ? '' : 'bob', u.sleep ? 'zz' : null));
+  b.append(el('span', 'nm', u.name));
+  b.append(el('span', 'hs', u.hp + '/' + u.max + ' · ' + u.atk));
+  b.append(stChips(u));
+  return b;
+}
+function renderFight() {
+  const f = ui.fight;
+  const us = $('line-us'), them = $('line-them');
+  const enemies = enemiesOf(S.day);
+  $('foe-lab').textContent = (S.day % 7 === 0 ? 'chefe da semana' : 'selvagens') + ' · nível ' + enemies[0].lvl;
+  if (f) {
+    const fr = f.res.frames[f.i];
+    us.replaceChildren(...fr.us.map((u, i) => unitEl(u, fr.hl.includes(u.k), fr.hit.includes(u.k), null, i === 0)));
+    them.replaceChildren(...fr.them.map((u, i) => unitEl(u, fr.hl.includes(u.k), fr.hit.includes(u.k), null, i === 0)));
+    $('msg').innerHTML = fr.msg;
+    const done = f.i >= f.res.frames.length - 1;
+    $('btn-skip').hidden = done;
+    $('btn-fight').hidden = true; $('btn-clear').hidden = true;
+    $('order-hint').textContent = '';
+    renderRecruit(done);
+    return;
+  }
+  const defs = S.line.map(byId).filter(Boolean);
+  const slots = defs.map((s, i) => {
+    const st = statsOf(s.g, levelOf(s.xp));
+    const u = { name: s.name, p: phen(s.g), hp: st.hp, max: st.hp, atk: st.atk };
+    return unitEl(u, false, false, () => { ui.sel = s.id; renderAll(); }, i === 0);
+  });
+  for (let i = defs.length; i < LINE_MAX; i++) { const e = el('div', 'unit slot', i === 0 ? 'frente' : '+'); slots.push(e); }
+  us.replaceChildren(...slots);
+  them.replaceChildren(...enemies.map((e, i) => {
+    const st = statsOf(e.g, e.lvl);
+    return unitEl({ name: e.name, p: phen(e.g), hp: st.hp, max: st.hp, atk: st.atk }, false, false, () => { ui.sel = 'e:' + e.id; renderAll(); }, i === 0);
+  }));
+  $('btn-fight').hidden = false; $('btn-clear').hidden = false; $('btn-skip').hidden = true;
+  $('btn-fight').disabled = S.fought || !S.line.length;
+  $('btn-fight').textContent = S.fought ? 'Já lutou hoje' : 'Lutar';
+  $('btn-clear').disabled = S.fought || !S.line.length;
+  if (S.fought && S.last) $('msg').innerHTML = S.last.outcome === 'win' ? '<b>Vitória</b> em ' + S.last.rounds + ' rodadas. Avance o dia pra próxima luta.' : 'Derrota. Avance o dia pra próxima luta.';
+  else if (!S.line.length) $('msg').textContent = 'Toque nos slimes prontos do curral pra pôr na fila. O primeiro que entrar fica na frente.';
+  else $('msg').textContent = 'Toque num inimigo ou num slime pra ver os gatilhos. Quando a fila estiver boa, lute.';
+  $('order-hint').textContent = S.fought ? '' : 'Os números são vida e ataque. Os selvagens de hoje são os mesmos pra todo mundo.';
+  renderRecruit(true);
+}
+function renderRecruit(done) {
+  const box = $('recruit');
+  if (!done || !S.recruit) { box.hidden = true; box.replaceChildren(); return; }
+  box.hidden = false;
+  const enemies = enemiesOf(S.day);
+  const head = el('p', '', penFull() ? 'Vitória! Tu pode levar um selvagem pro curral, mas ele está cheio: solte alguém primeiro.' : 'Vitória! Leva um dos selvagens pro curral? Ele traz os genes dele.');
+  const row = el('div', 'row');
+  enemies.forEach(e => {
+    const b = el('button', 'btn small', 'Levar ' + e.name);
+    b.type = 'button'; b.disabled = penFull();
+    b.addEventListener('click', () => recruit(e.id));
+    row.append(b);
+  });
+  const no = el('button', 'btn small', 'Nenhum'); no.type = 'button';
+  no.addEventListener('click', () => { S.recruit = null; save(); renderAll(); });
+  row.append(no);
+  box.replaceChildren(head, row);
+}
+function stateOf(s) {
+  if (!isAdult(s)) { const d = ADULT_AGE - age(s); return ['baby', 'bebê · luta em ' + d + (d === 1 ? ' dia' : ' dias')]; }
+  if (S.line.includes(s.id) && !S.fought) return ['inline', 'na fila · ' + (S.line.indexOf(s.id) + 1) + 'º'];
+  if (s.rest > 0) return s.hurt ? ['hurt', 'ferido · ' + s.rest + (s.rest === 1 ? ' dia' : ' dias')] : ['tired', 'cansado · volta amanhã'];
+  return ['ready', 'pronto'];
+}
+function renderPen() {
+  const pen = $('pen');
+  $('pen-count').textContent = (S.slimes.length + (S.egg ? 1 : 0)) + ' de ' + PEN_MAX;
+  const cards = S.slimes.map(s => {
+    const p = phen(s.g), lvl = levelOf(s.xp), st = statsOf(s.g, lvl), [cls, txt] = stateOf(s);
+    const b = el('button', 'card' + (S.line.includes(s.id) ? ' inline' : '') + (ui.picks.includes(s.id) ? ' picked' : '') + ((cls === 'tired' || cls === 'hurt') ? ' dim' : ''));
+    b.type = 'button';
+    b.setAttribute('aria-pressed', ui.sel === s.id ? 'true' : 'false');
+    b.append(sprite(p, 44, cls === 'tired' || cls === 'hurt' ? '' : 'bob', cls === 'tired' || cls === 'hurt' ? 'zz' : null));
+    b.append(el('span', 'nm', s.name));
+    b.append(el('span', 'hs', 'nv ' + lvl + ' · ' + st.hp + '/' + st.atk));
+    const ab = abilities(p).map(a => AB_TXT[a][0]);
+    b.append(el('span', 'tr', [p.cor].concat(ab).join(', ')));
+    b.append(el('span', 'state ' + cls, txt));
+    if (S.showGenes) b.append(el('span', 'geno', genoText(s.g)));
+    b.addEventListener('click', () => onCard(s));
+    return b;
+  });
+  if (S.egg) {
+    const e = el('div', 'card');
+    e.append(eggSprite(44), el('span', 'nm', 'Ovo'), el('span', 'tr', S.egg.parents.join(' × ')), el('span', 'hs', ''), el('span', 'state baby', 'choca amanhã'));
+    if (S.showGenes) e.append(el('span', 'geno', genoText(S.egg.g)));
+    cards.push(e);
+  }
+  pen.replaceChildren(...cards);
+  const bb = $('btn-breed');
+  bb.textContent = ui.breed ? 'Cancelar' : 'Cruzar';
+  bb.disabled = !ui.breed && (S.bred || penFull());
+  $('breed-note').textContent = ui.breed ? 'Escolha dois adultos (' + ui.picks.length + ' de 2).' : S.bred ? 'Já cruzou hoje.' : penFull() ? 'Curral cheio: solte alguém pra cruzar.' : 'Um cruzamento por dia. O ovo choca amanhã.';
+}
+function onCard(s) {
+  if (ui.breed) {
+    if (!isAdult(s)) return;
+    const i = ui.picks.indexOf(s.id);
+    if (i >= 0) ui.picks.splice(i, 1); else if (ui.picks.length < 2) ui.picks.push(s.id);
+    ui.sel = 'breed';
+    renderAll();
+    return;
+  }
+  if (isReady(s) && !S.fought && !S.line.includes(s.id) && S.line.length < LINE_MAX) { S.line.push(s.id); save(); }
+  ui.sel = s.id;
+  renderAll();
+}
+function abBlock(p) {
+  const box = el('div', 'ab-list');
+  const els = ELEM[p.cor];
+  box.append(el('div', '', 'Elemento: ' + els.join(' e ') + (els.length > 1 ? ', alternando a cada golpe.' : '.')));
+  abilities(p).forEach(a => { const d = el('div'); const b = el('b', '', AB_TXT[a][0] + ': '); d.append(b, AB_TXT[a][1]); box.append(d); });
+  if (!abilities(p).length) box.append(el('div', 'muted', 'Sem gatilho: só golpeia.'));
+  return box;
+}
+function renderDetail() {
+  const box = $('detail');
+  if (ui.sel === 'breed') {
+    const [a, b] = ui.picks.map(byId);
+    box.hidden = false;
+    const parts = [el('h3', '', a && b ? 'Cruzar ' + a.name + ' × ' + b.name : 'Escolha dois adultos no curral')];
+    if (a && b) {
+      if (S.showGenes) {
+        const o = odds(a.g, b.g);
+        const od = el('div', 'odds');
+        Object.keys(o).forEach(k => { const d = el('div'); d.append(el('b', '', GENE_NAMES[k] + ': '), Object.entries(o[k]).map(([v, n]) => v + ' ' + n + '%').join(', ')); od.append(d); });
+        parts.push(el('p', 'note', 'Chances do filhote, gene por gene:'), od);
+      } else parts.push(el('p', 'note', 'O filhote pega uma cópia de cada gene de cada pai. Ligue "Mostrar genes" pra ver as chances.'));
+      const go = el('button', 'btn primary', 'Botar o ovo'); go.type = 'button'; go.addEventListener('click', doBreed);
+      parts.push(el('div', 'row'));
+      parts[parts.length - 1].append(go);
+    }
+    box.replaceChildren(...parts);
+    return;
+  }
+  if (typeof ui.sel === 'string' && ui.sel.startsWith('e:')) {
+    const e = enemiesOf(S.day).find(x => 'e:' + x.id === ui.sel);
+    if (!e) { box.hidden = true; return; }
+    const p = phen(e.g), st = statsOf(e.g, e.lvl);
+    box.hidden = false;
+    const head = el('div', 'row'); head.append(sprite(p, 56, 'bob'));
+    const t = el('div'); t.append(el('h3', '', e.name + ' (selvagem)'), el('div', 'note', 'nível ' + e.lvl + ' · vida ' + st.hp + ' · ataque ' + st.atk + ' · ' + p.cor));
+    head.append(t);
+    box.replaceChildren(head, abBlock(p));
+    if (S.showGenes) box.append(el('div', 'geno', genoText(e.g)));
+    return;
+  }
+  const s = byId(ui.sel);
+  if (!s) { box.hidden = true; box.replaceChildren(); return; }
+  box.hidden = false;
+  const p = phen(s.g), lvl = levelOf(s.xp), st = statsOf(s.g, lvl);
+  const head = el('div', 'row'); head.append(sprite(p, 56, 'bob'));
+  const t = el('div');
+  t.append(el('h3', '', s.name), el('div', 'note', 'nível ' + lvl + ' (' + s.xp + ' vitórias) · vida ' + st.hp + ' · ataque ' + st.atk + ' · ' + age(s) + (age(s) === 1 ? ' dia' : ' dias') + ' de vida'));
+  t.append(el('div', 'note', s.parents ? 'Filho de ' + s.parents.join(' e ') + '.' : s.wild ? 'Veio da natureza.' : ''));
+  head.append(t);
+  const parts = [head, abBlock(p)];
+  if (S.showGenes) parts.push(el('div', 'geno', 'genes: ' + genoText(s.g)));
+  const row = el('div', 'row');
+  const inLine = S.line.includes(s.id);
+  if (inLine && !S.fought) {
+    const out = el('button', 'btn small', 'Tirar da fila'); out.type = 'button'; out.addEventListener('click', () => toggleLine(s.id));
+    const fw = el('button', 'btn small', 'Mais pra frente'); fw.type = 'button'; fw.disabled = S.line.indexOf(s.id) === 0; fw.addEventListener('click', () => moveInLine(s.id, -1));
+    const bk = el('button', 'btn small', 'Mais pra trás'); bk.type = 'button'; bk.disabled = S.line.indexOf(s.id) === S.line.length - 1; bk.addEventListener('click', () => moveInLine(s.id, 1));
+    row.append(out, fw, bk);
+  } else if (isReady(s) && !S.fought) {
+    const inb = el('button', 'btn small', 'Pôr na fila'); inb.type = 'button'; inb.disabled = S.line.length >= LINE_MAX; inb.addEventListener('click', () => toggleLine(s.id));
+    row.append(inb);
+  }
+  const rel = el('button', 'btn small', ui.releaseArmed === s.id ? 'Toque de novo pra soltar' : 'Soltar na natureza'); rel.type = 'button';
+  if (ui.releaseArmed === s.id) rel.classList.add('armed');
+  rel.addEventListener('click', () => {
+    if (ui.releaseArmed === s.id) { ui.releaseArmed = null; release(s.id); return; }
+    ui.releaseArmed = s.id; renderDetail();
+    setTimeout(() => { if (ui.releaseArmed === s.id) { ui.releaseArmed = null; renderDetail(); } }, 3000);
+  });
+  row.append(rel);
+  parts.push(row);
+  box.replaceChildren(...parts);
+}
+function renderTop() {
+  const boss = S.day % 7 === 0;
+  $('day').textContent = 'Dia ' + S.day + (boss ? ' · chefe da semana' : '') + ' · ' + S.wins + ' vitórias, ' + S.losses + ' derrotas';
+  $('fight-sub').textContent = S.fought ? 'feita' : 'uma por dia';
+  const todo = [['Luta', S.fought], ['Cruzar', S.bred]];
+  $('todo').replaceChildren(...todo.map(([t, d]) => el('span', d ? 'done' : '', t + (d ? ' feito' : ' disponível'))));
+  $('btn-genes').setAttribute('aria-pressed', S.showGenes ? 'true' : 'false');
+  $('btn-genes').textContent = S.showGenes ? 'Esconder genes' : 'Mostrar genes';
+}
+function renderGuide() {
+  const g = $('guide');
+  const items = Object.entries(AB_TXT).map(([k, [n, d]]) => { const x = el('div'); x.append(el('b', '', n + ': '), d); return x; });
+  EL_TXT.forEach(([n, d]) => { const x = el('div'); x.append(el('b', '', n + ': '), d); items.push(x); });
+  g.replaceChildren(...items);
+}
+function renderAll() { renderTop(); renderFight(); renderPen(); renderDetail(); }
+
+$('btn-next').addEventListener('click', nextDay);
+$('btn-fight').addEventListener('click', startFight);
+$('btn-skip').addEventListener('click', skipFight);
+$('btn-clear').addEventListener('click', () => { if (S.fought) return; S.line = []; save(); renderAll(); });
+$('btn-breed').addEventListener('click', () => { ui.breed = !ui.breed; ui.picks = []; ui.sel = ui.breed ? 'breed' : null; renderAll(); });
+$('btn-genes').addEventListener('click', () => { S.showGenes = !S.showGenes; save(); renderAll(); });
+$('btn-reset').addEventListener('click', e => {
+  if (!ui.resetArmed) { e.target.textContent = 'Toque de novo'; e.target.classList.add('armed'); ui.resetArmed = setTimeout(() => { ui.resetArmed = null; e.target.textContent = 'Recomeçar'; e.target.classList.remove('armed'); }, 3000); return; }
+  clearTimeout(ui.resetArmed); ui.resetArmed = null; e.target.textContent = 'Recomeçar'; e.target.classList.remove('armed');
+  clearTimeout(ui.timer); ui = { sel: null, breed: false, picks: [], fight: null, timer: null, releaseArmed: null, resetArmed: null };
+  newGame(); save(); renderAll();
+});
+
+function boot(data) {
+  S = (data && data.day) ? data : load();
+  if (!S || !S.slimes) { newGame(); save(); }
+  renderGuide();
+  renderAll();
+}
+window.claude?.hot?.snapshot?.(() => S);
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+</script>

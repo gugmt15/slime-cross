@@ -102,7 +102,13 @@ details.howto li { margin-bottom: 4px; }
 .threat b { color: var(--danger); flex: none; }
 .threat.done b { color: var(--muted); }
 
-.rules-box { display: flex; flex-direction: column; gap: 6px; }
+.rules-box .rules-lead { margin: 8px 0; }
+.rulestrip { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; border-top: 1.5px dashed var(--line); padding-top: 10px; }
+.srule { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 0.8rem; color: var(--muted); }
+.sfig { display: inline-flex; flex-direction: column; align-items: center; gap: 0; }
+.sfig canvas { width: 28px; height: 28px; display: block; }
+.slab { font-size: 0.68rem; color: var(--ink); line-height: 1.1; }
+.domina { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; background: var(--accent); color: var(--accent-ink); padding: 1px 5px; border-radius: 4px; }
 .rules-lead { margin: 0; font-size: 0.86rem; color: var(--muted); max-width: 70ch; }
 .rules-lead b { color: var(--ink); }
 .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 12px; }
@@ -348,25 +354,11 @@ img { max-width: 100%; }
       <div class="tname" id="target-name">Slime</div>
       <div class="tgeno">Genes do alvo: <span id="target-geno" class="tgeno-tags"></span></div>
     </div>
+    <div class="rulestrip" id="rulestrip" aria-label="Quem domina"></div>
     <div class="threat" id="threat"><b>Ameaça</b><span id="threat-text"></span></div>
   </section>
 
-  <section class="rules-box" aria-labelledby="h-rules">
-    <p class="rules-lead" id="h-rules">Cada slime tem <b>duas cópias</b> de cada gene, uma de cada pai. A <b>dominante</b> aparece; a <b>recessiva</b> fica escondida e pode voltar nos filhos.</p>
-    <div class="rules" id="rules"></div>
-  </section>
 
-  <details class="howto" id="howto">
-    <summary>Como jogar</summary>
-    <ul>
-      <li>Toque em dois slimes e aperte <b>Cruzar</b>. Nascem sempre 4 filhotes, e o mesmo par dá sempre a mesma ninhada.</li>
-      <li>Os filhotes entram na árvore e podem ser cruzados também. Você tem 8 cruzamentos para fazer nascer o alvo.</li>
-      <li>Todo desafio precisa de pelo menos 3 cruzamentos: o alvo junta traços de slimes diferentes, e isso leva duas gerações.</li>
-      <li>O que o alvo pede sempre aparece à vista em algum dos slimes iniciais. Dá para resolver só deduzindo.</li>
-      <li><b>Easy Mode</b> mostra as letras dos genes embaixo de cada slime e permite marcar palpites. <code>V_</code> quer dizer "tem um V, e a outra letra ainda não se sabe".</li>
-    </ul>
-    <button class="btn" id="btn-tut-again" type="button">Rever o tutorial</button>
-  </details>
 
   <section aria-labelledby="h-pop">
     <div class="tree-head">
@@ -381,6 +373,24 @@ img { max-width: 100%; }
   </section>
 
   <section id="end" class="end" hidden aria-live="polite"></section>
+
+  <details class="howto rules-box" id="rules-details">
+    <summary>Regras explicadas</summary>
+    <p class="rules-lead" id="h-rules">Cada slime tem <b>duas cópias</b> de cada gene, uma de cada pai. A <b>dominante</b> aparece; a <b>recessiva</b> fica escondida e pode voltar nos filhos.</p>
+    <div class="rules" id="rules"></div>
+  </details>
+
+  <details class="howto" id="howto">
+    <summary>Como jogar</summary>
+    <ul>
+      <li>Toque em dois slimes e aperte <b>Cruzar</b>. Nascem sempre 4 filhotes, e o mesmo par dá sempre a mesma ninhada.</li>
+      <li>Os filhotes entram na árvore e podem ser cruzados também. Você tem 8 cruzamentos para fazer nascer o alvo.</li>
+      <li>Todo desafio precisa de pelo menos 3 cruzamentos: o alvo junta traços de slimes diferentes, e isso leva duas gerações.</li>
+      <li>O que o alvo pede sempre aparece à vista em algum dos slimes iniciais. Dá para resolver só deduzindo.</li>
+      <li><b>Easy Mode</b> mostra as letras dos genes embaixo de cada slime e permite marcar palpites. <code>V_</code> quer dizer "tem um V, e a outra letra ainda não se sabe".</li>
+    </ul>
+    <button class="btn" id="btn-tut-again" type="button">Rever o tutorial</button>
+  </details>
 
   <footer>
     Mendel chegou nessas regras cruzando ervilhas no jardim do mosteiro de Brno, entre 1856 e 1863. A cor intermediária e o gene que esconde outro foram entendidos depois dele, no começo do século 20.
@@ -458,6 +468,24 @@ function miniFig(spec, role) {
   const cap = document.createElement('figcaption'); cap.append(label + ' ', geneTag(code)); f.append(cap);
   if (role) { const r = document.createElement('span'); r.className = 'role ' + role; r.textContent = role === 'dom' ? 'dominante' : 'recessivo'; f.append(r); }
   return f;
+}
+function stripFig(over, label) {
+  const f = document.createElement('span'); f.className = 'sfig'; f.title = label;
+  f.append(sprite(Object.assign({}, BASE_P, over)));
+  const l = document.createElement('span'); l.className = 'slab'; l.textContent = label; f.append(l);
+  return f;
+}
+function renderStrip(V) {
+  return rulesOf(V).map(r => {
+    const c = document.createElement('span'); c.className = 'srule';
+    if (r.mix) {
+      c.append(stripFig(r.figs[0][0], r.figs[0][1]), '+', stripFig(r.figs[2][0], r.figs[2][1]), '=', stripFig(r.figs[1][0], r.figs[1][1]));
+    } else {
+      const d = document.createElement('span'); d.className = 'domina'; d.textContent = 'domina';
+      c.append(stripFig(r.dom[0], r.dom[1]), d, stripFig(r.rec[0], r.rec[1]));
+    }
+    return c;
+  });
 }
 function renderRules(V) {
   return rulesOf(V).map(r => {
@@ -893,6 +921,7 @@ function render() {
   $('threat').classList.toggle('done', G.fired);
 
   $('rules').replaceChildren(...renderRules(V));
+  $('rulestrip').replaceChildren(...renderStrip(V));
 
   renderTree();
   $('pop-count').textContent = G.pop.length + ' slimes';
@@ -1438,6 +1467,12 @@ $('z-fit').addEventListener('click', () => setZoom(fitZoom()));
   });
   const end = e => { pts.delete(e.pointerId); if (pts.size < 2) start = null; };
   host.addEventListener('pointerup', end); host.addEventListener('pointercancel', end); host.addEventListener('pointerleave', end);
+  /* impede que a pinça na árvore dê zoom na página inteira (o resultado e o resto ficam no tamanho normal) */
+  host.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  let gz = 1;
+  host.addEventListener('gesturestart', e => { e.preventDefault(); gz = G ? (G.zoom || 1) : 1; });
+  host.addEventListener('gesturechange', e => { e.preventDefault(); if (!pts.size) setZoom(gz * e.scale); });
+  host.addEventListener('gestureend', e => e.preventDefault());
 })();
 
 $('go-daily').addEventListener('click', () => { startDaily(); show('game'); });

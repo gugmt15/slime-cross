@@ -2,7 +2,7 @@
 
 Desafio diário de genética de Mendel, em pixel art. Tu começa com três slimes de genes escondidos, cruza eles e tenta fazer nascer o slime alvo em até 6 cruzamentos.
 
-**Jogar:** https://gugmt15.github.io/slime-do-dia/
+**Jogar:** https://gugmt15.github.io/slime-cross/
 
 ## Como funciona
 

@@ -1,4 +1,4 @@
-"""Simulação de jogadores no Slime do Dia.
+"""Simulação de jogadores no Slime Cross.
 
 Reproduz as regras do jogo (genes dominante/recessivo, ninhada de 4 nas proporções exatas,
 permutação por gene fixa por par, gerador com modo justo e solucionador de 2 ou 3 cruzamentos)

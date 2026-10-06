@@ -1,4 +1,4 @@
-"""Gera a lista de desafios do dia do Slime do Dia.
+"""Gera a lista de desafios do dia do Slime Cross.
 
 A ordem dos filhotes em cada ninhada usa exatamente as mesmas fórmulas do jogo
 (hashStr FNV-1a, rngFrom e shuffle4 do index.html), então a dificuldade medida

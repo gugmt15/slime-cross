@@ -130,7 +130,7 @@ details.howto li { margin-bottom: 4px; }
 .threat b { color: var(--danger); flex: none; }
 .threat.done b { color: var(--muted); }
 
-.rules-box .rules-lead { margin: 8px 0; }
+.rules-box { display: flex; flex-direction: column; gap: 6px; }
 .rules-lead { margin: 0; font-size: 0.86rem; color: var(--muted); max-width: 70ch; }
 .rules-lead b { color: var(--ink); }
 .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 12px; }
@@ -389,11 +389,10 @@ img { max-width: 100%; }
     <div class="threat" id="threat"><b data-i18n="threat"></b><span id="threat-text"></span></div>
   </section>
 
-  <details class="howto rules-box" id="rules-details">
-    <summary data-i18n="rules_sum"></summary>
-    <p class="rules-lead" data-i18n-html="rules_lead"></p>
+  <section class="rules-box" aria-labelledby="h-rules">
+    <p class="rules-lead" id="h-rules" data-i18n-html="rules_lead"></p>
     <div class="rules" id="rules"></div>
-  </details>
+  </section>
 
   <section aria-labelledby="h-pop">
     <div class="tree-head">

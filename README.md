@@ -14,14 +14,10 @@ A cross always gives 4 offspring, in the exact proportions Mendel found. Crossin
 
 The daily puzzle needs at least 3 crosses, and you have 8. There's a short tutorial, an easy mode that shows the gene letters, and a practice mode with harder variants.
 
-## How the puzzles are picked
-
-A generator creates random puzzles and a solver finds the shortest solution for each one. At first almost every puzzle could be solved in 2 crosses, and even crossing at random won 46% of the time. So I wrote a Python version of the game (`ferramentas/sim.py`) and simulated three kinds of players: one that crosses at random, one that reasons from what the slimes look like, and one that keeps track of the odds of each hidden gene.
-
-The first 100 daily puzzles (`ferramentas/gen100.py`) were picked with that simulation. The player that reasons from looks wins between 50% and 95% of them, and the random one at most 25%.
-
 ## Code
 
 Everything is in `index.html`, with no build step. It uses [dagre](https://github.com/dagrejs/dagre) to draw the family tree, plus fonts from Google Fonts. Your progress is saved only in your browser. The site counts visits with Cloudflare's analytics, which doesn't use cookies.
 
 To run it locally, open `index.html`. Pushing to `main` publishes the site on Cloudflare Pages.
+
+There's also a Python simulation in `ferramentas/` that I used to set the difficulty of the daily puzzles.

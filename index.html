@@ -272,7 +272,7 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 .bigbtn.primary small { color: var(--accent-ink); opacity: 0.85; }
 .bigbtn.ghost { box-shadow: none; border-style: dashed; font-size: 1.1rem; }
 .bigbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
-.badge { position: absolute; top: -5px; right: 12px; font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; background: var(--danger); color: #ffffff; padding: 1px 8px; border-radius: 99px; }
+.badge { position: absolute; top: -2px; right: 12px; font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; background: var(--danger); color: #ffffff; padding: 1px 8px; border-radius: 99px; }
 .btn.ghost { border-color: transparent; background: transparent; padding-inline: 4px; }
 .gamehead { align-items: center; }
 .gh-mid { flex: 1 1 auto; min-width: 0; }
@@ -395,12 +395,6 @@ img { max-width: 100%; }
     <div class="rules" id="rules"></div>
   </details>
 
-  <details class="howto" id="howto">
-    <summary data-i18n="howto_sum"></summary>
-    <ul data-i18n-html="howto"></ul>
-    <button class="btn" id="btn-tut-again" type="button" data-i18n="tut_again"></button>
-  </details>
-
   <section aria-labelledby="h-pop">
     <div class="tree-head">
       <h2 id="h-pop"><span data-i18n="tree"></span> <small id="pop-count"></small></h2>
@@ -414,6 +408,12 @@ img { max-width: 100%; }
   </section>
 
   <section id="end" class="end" hidden aria-live="polite"></section>
+
+  <details class="howto" id="howto">
+    <summary data-i18n="howto_sum"></summary>
+    <ul data-i18n-html="howto"></ul>
+    <button class="btn" id="btn-tut-again" type="button" data-i18n="tut_again"></button>
+  </details>
 
   <footer data-i18n="footer"></footer>
 </div>

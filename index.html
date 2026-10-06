@@ -272,8 +272,7 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 .bigbtn.primary small { color: var(--accent-ink); opacity: 0.85; }
 .bigbtn.ghost { box-shadow: none; border-style: dashed; font-size: 1.1rem; }
 .bigbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
-.bigbtn-line { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; }
-.badge { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; background: var(--danger); color: #ffffff; padding: 1px 8px; border-radius: 99px; }
+.badge { position: absolute; top: -5px; right: 12px; font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; background: var(--danger); color: #ffffff; padding: 1px 8px; border-radius: 99px; }
 .btn.ghost { border-color: transparent; background: transparent; padding-inline: 4px; }
 .gamehead { align-items: center; }
 .gh-mid { flex: 1 1 auto; min-width: 0; }
@@ -335,7 +334,7 @@ img { max-width: 100%; }
   <p class="home-tag" data-i18n="home_tag"></p>
   <div class="home-btns">
     <button class="bigbtn primary" id="go-daily" type="button"><span data-i18n="go_daily"></span><small id="daily-status"></small></button>
-    <button class="bigbtn" id="go-tut" type="button"><span class="bigbtn-line"><span data-i18n="tutorial"></span><span class="badge" id="tut-badge" data-i18n="start_here"></span></span><small data-i18n="tut_sub"></small></button>
+    <button class="bigbtn" id="go-tut" type="button"><span class="badge" id="tut-badge" data-i18n="start_here"></span><span data-i18n="tutorial"></span><small data-i18n="tut_sub"></small></button>
     <button class="bigbtn ghost" id="go-more" type="button"><span data-i18n="more"></span><small data-i18n="more_sub"></small></button>
   </div>
 </div>

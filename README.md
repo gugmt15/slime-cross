@@ -1,33 +1,27 @@
 # Slime Cross
 
-A daily genetics puzzle with pixel-art slimes. Every day everyone gets the same three slimes with hidden genes and the same target slime. Cross them, read the litters, work out what each one is hiding, and hatch the target in as few crosses as you can.
+A daily puzzle about genetics. You get three slimes with hidden genes and a target slime, and you have to breed the target. Everyone gets the same puzzle each day.
 
-**Play:** [slimecross.com](https://slimecross.com) · English, Português, 日本語
+Play at [slimecross.com](https://slimecross.com). It's in English, Portuguese and Japanese.
 
-![A game in progress: the target at the top, the dominant and recessive traits, and the family tree of crosses](docs/screenshot.jpg)
+![A game in progress, with the target at the top and the family tree of crosses](docs/screenshot.jpg)
 
-## How it plays
+## Rules
 
-- Each slime carries two copies of three genes (color, horn, eyes), one from each parent. The dominant copy shows; the recessive one stays hidden and can come back in the next generation.
-- Every cross produces 4 offspring in Mendel's exact ratios, gene by gene. The same pair always gives the same litter, so there is no luck involved, only deduction.
-- Each daily challenge needs at least 3 crosses and allows 8. Everything the target needs is visible in at least one starting slime.
-- The result is shared Wordle-style, as a grid of squares per litter.
-- A four-step tutorial teaches the rules through Mendel's own experiment. Easy Mode shows the gene letters and lets you mark guesses. Practice mode adds variants (incomplete dominance, a gene that hides color, a fourth gene) and harder modes (aging, a predator that removes one phenotype, hidden carriers).
+Each slime has two copies of each gene (color, horn and eyes), one from each parent. If a slime has a dominant copy, that's the trait you see. The recessive trait only shows when both copies are recessive, so a slime can carry a trait without showing it and pass it on to its offspring.
 
-## How the challenges are made
+A cross always gives 4 offspring, in the exact proportions Mendel found. Crossing the same pair again gives the same litter, so you solve the puzzle by figuring out what each slime is hiding.
 
-Puzzles come from a seeded generator plus a solver. The generator draws three starting slimes and a target; the solver searches every sequence of crosses for the shortest solution, and anything solvable in fewer than 3 is rejected.
+The daily puzzle needs at least 3 crosses, and you have 8. There's a short tutorial, an easy mode that shows the gene letters, and a practice mode with harder variants.
 
-That alone still gave puzzles that were too easy, so difficulty was tuned with simulated players (`ferramentas/sim.py`, a Python port of the game rules):
+## How the puzzles are picked
 
-- a **random** player, who crosses valid pairs at random;
-- an **intuitive** player, who reasons from appearance and ancestry;
-- a **smart** player, who keeps a belief over the hidden genes by sampling possible worlds and picks the cross most likely to hatch the target.
+A generator creates random puzzles and a solver finds the shortest solution for each one. At first almost every puzzle could be solved in 2 crosses, and even crossing at random won 46% of the time. So I wrote a Python version of the game (`ferramentas/sim.py`) and simulated three kinds of players: one that crosses at random, one that reasons from what the slimes look like, and one that keeps track of the odds of each hidden gene.
 
-Under the first version of the rules almost every puzzle was solved in 2 crosses, and even the random player won 46% of the time. With the 3-cross minimum and a simulation filter, the first 100 daily challenges (`ferramentas/gen100.py`) are ones the intuitive player wins between 50% and 95% of the time, and the random player at most 25%.
+The first 100 daily puzzles (`ferramentas/gen100.py`) were picked with that simulation. The player that reasons from looks wins between 50% and 95% of them, and the random one at most 25%.
 
 ## Code
 
-The whole game is one `index.html`: HTML, CSS and plain JavaScript, no build step. The family tree is laid out with [dagre](https://github.com/dagrejs/dagre), and the fonts come from Google Fonts. Progress and stats stay in each player's browser (local storage); the site only counts visits, with Cloudflare's cookie-free analytics.
+Everything is in `index.html`, with no build step. It uses [dagre](https://github.com/dagrejs/dagre) to draw the family tree, plus fonts from Google Fonts. Your progress is saved only in your browser. The site counts visits with Cloudflare's analytics, which doesn't use cookies.
 
-To run it, open `index.html` in a browser. To publish, push to `main`: the site is served by Cloudflare Pages, and every other branch gets its own preview address.
+To run it locally, open `index.html`. Pushing to `main` publishes the site on Cloudflare Pages.

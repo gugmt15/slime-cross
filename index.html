@@ -135,7 +135,9 @@ details.howto li { margin-bottom: 4px; }
 .winrow { border-top: 2px solid var(--line); padding-top: 6px; min-width: 0; font-size: 0.86rem; }
 .winrow.new { border-top-color: var(--accent); }
 .wr-title { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink); font-weight: 600; }
-.wr-pair { display: flex; align-items: flex-start; gap: 14px; margin: 4px 0; }
+.wr-pair { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 14px; margin: 4px 0; }
+.wr-pair.mix { gap: 6px 8px; }
+.wr-pair.mix .mini { min-width: 56px; }
 .mini { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; }
 .mini canvas { width: 36px; height: 36px; display: block; }
 .mini figcaption { font-size: 0.8rem; font-weight: 700; display: flex; gap: 3px; align-items: center; white-space: nowrap; }
@@ -540,7 +542,7 @@ function renderRules(V) {
   return rulesOf(V).map(r => {
     const e = document.createElement('div'); e.className = 'winrow' + (r.novo ? ' new' : '');
     const t = document.createElement('div'); t.className = 'wr-title'; t.textContent = r.t;
-    const pair = document.createElement('div'); pair.className = 'wr-pair';
+    const pair = document.createElement('div'); pair.className = 'wr-pair' + (r.mix ? ' mix' : '');
     if (r.mix) {
       r.figs.forEach((fg, i) => { if (i) { const sep = document.createElement('span'); sep.className = 'wr-op'; sep.textContent = i === 1 ? '·' : '·'; pair.append(sep); } pair.append(miniFig(fg)); });
     } else {

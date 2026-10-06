@@ -20,4 +20,4 @@ Everything is in `index.html`, with no build step. It uses [dagre](https://githu
 
 To run it locally, open `index.html`. Pushing to `main` publishes the site on Cloudflare Pages.
 
-There's also a Python simulation in `ferramentas/` that I used to set the difficulty of the daily puzzles.
+There's also a Python simulation in `tools/` that I used to set the difficulty of the daily puzzles.

@@ -108,7 +108,7 @@ if __name__ == '__main__':
             continue
         out.append({'k': key, 's': [''.join(str(a) + str(b) for a, b in s) for s in starters], 't': ''.join(map(str, t)), 'pi': pi, 'pr': pr, 'avg': avg})
         prev_t = t
-    json.dump(out, open('lista100.json', 'w'), separators=(',', ':'))
+    json.dump(out, open('list100.json', 'w'), separators=(',', ':'))
     pis = [o['pi'] for o in out]; prs = [o['pr'] for o in out]; avgs = [o['avg'] for o in out if o['avg']]
     from collections import Counter
     print('candidatos testados:', tried, 'aceitos:', len(out))

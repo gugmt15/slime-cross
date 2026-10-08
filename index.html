@@ -968,6 +968,7 @@ function render() {
   }
   $('trainbar').hidden = G.mode !== 'train';
   $('btn-new-top').hidden = G.mode !== 'train';
+  $('btn-reset').hidden = G.mode === 'daily';
   $('variant').value = V.id;
 
   drawSlime($('target-cv'), t);

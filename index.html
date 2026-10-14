@@ -752,6 +752,14 @@ function makePuzzle(V, seedStr, mods) {
     if (!interesting(V, P.target)) continue;
     if (P.starters.some(s => match(V, s.p, P.target))) continue;
     if (!mods.hard && !fairStart(V, P.starters, P.target)) continue;
+    /* Quatro genes: a asa tem que dar trabalho. O alvo pede asa (o recessivo) e ela está num slime inicial
+       diferente do que já tem a maior parte dos outros traços; sem isso, a asa vinha de graça e o modo ficava fácil. */
+    if (V.wings) {
+      if (!P.target.asas) continue;
+      const score = c => V.keys.filter(k => k !== 'asas' && c.p[k] === P.target[k]).length;
+      const top = Math.max(...P.starters.map(score));
+      if (P.starters.some(c => score(c) === top && c.p.asas)) continue;
+    }
     if (mods.threat) {
       const onTarget = valid.filter(e => P.target[e.k] === e.v);
       const pool = onTarget.length && rng() < 0.5 ? onTarget : valid;

@@ -245,11 +245,11 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
   background: var(--surface); border-top: 2px solid var(--ink);
 }
 .bar-in { max-width: 760px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
-.pips { display: flex; gap: 4px; flex: 1 1 100%; }
+.pips { display: flex; gap: 4px; flex: none; margin-left: auto; }
 .bar-actions { flex: 1 1 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .pip { width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 3px; }
 .pip.used { background: var(--ink); }
-.msg { font-size: 0.92rem; flex: 1 1 220px; min-width: 0; }
+.msg { font-size: 0.92rem; flex: 1 1 120px; min-width: 0; }
 .notebar { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .notebar .nb-title { font-weight: 700; font-size: 0.88rem; }
 .gpick { display: flex; align-items: center; gap: 4px; }

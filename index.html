@@ -752,6 +752,9 @@ function makePuzzle(V, seedStr, mods) {
     if (!interesting(V, P.target)) continue;
     if (P.starters.some(s => match(V, s.p, P.target))) continue;
     if (!mods.hard && !fairStart(V, P.starters, P.target)) continue;
+    /* Todo treino: o slime inicial mais parecido com o alvo tem que errar pelo menos 2 traços. Com 1 só,
+       o alvo ficava a um passo de um inicial e o desafio saía fácil. */
+    if (V.keys.length - Math.max(...P.starters.map(c => hits(V, c.p, P.target))) < 2) continue;
     /* Quatro genes: a asa tem que dar trabalho. O alvo pede asa (o recessivo) e ela está num slime inicial
        diferente do que já tem a maior parte dos outros traços; sem isso, a asa vinha de graça e o modo ficava fácil. */
     if (V.wings) {

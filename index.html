@@ -1175,7 +1175,7 @@ function makeCard(c) {
     sp.style.animationDelay = jumpAt + 's';
     setTimeout(() => { drawSlime(sp, Object.assign({}, c.p, { happy: true })); celebrate(b); }, jumpAt * 1000);
   }
-  if (G.justPicked === c.id) sp.classList.add('pick');
+  if (G.justPicked === c.id) { sp.classList.add('pick'); sp.style.animationDelay = '0s, 0.5s'; } /* o atraso aleatório do balanço engolia o pulo */
   b.append(sp);
   const l = document.createElement('span'); l.className = 'lab'; l.textContent = lab(c.id); b.append(l);
   const mk = G.marks[c.id] || {};

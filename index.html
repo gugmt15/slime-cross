@@ -1174,7 +1174,7 @@ function makeCard(c) {
   if (isSad && !fresh.has(c.id)) b.classList.add('sad');
   if (isSad && fresh.has(c.id)) {
     const sadAt = KID_START + 3 * KID_GAP + KID_GROW + 0.3 + birthIdx(c) * 0.35;
-    setTimeout(() => { drawSlime(sp, Object.assign({}, c.p, { sad: true })); b.classList.add('wilting'); }, sadAt * 1000);
+    setTimeout(() => { drawSlime(sp, Object.assign({}, c.p, { sad: true })); sp.style.animationDuration = ''; sp.style.animationDelay = ''; b.classList.add('wilting'); }, sadAt * 1000);
   }
   if (fresh.has(c.id) && isWin) {
     const jumpAt = KID_START + birthIdx(c) * KID_GAP + KID_GROW;

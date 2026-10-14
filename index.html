@@ -223,6 +223,7 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 @keyframes wilt { 0% { transform: translateY(0) scale(1, 1); } 45% { transform: translateY(4px) scale(1.14, 0.8); } 70% { transform: translateY(2px) scale(1.05, 0.92); } 100% { transform: translateY(3px) scale(1.08, 0.88); } }
 @keyframes shine { 0%, 100% { box-shadow: 0 0 0 2px var(--accent), 0 0 10px 2px var(--accent); } 50% { box-shadow: 0 0 0 3px var(--accent), 0 0 28px 10px var(--accent); } }
 @keyframes pop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+canvas.sprite.winged { width: auto !important; }
 canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animation: bob 1.4s steps(2) infinite; }
 .slime.dead canvas.sprite { animation: none; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
@@ -736,12 +737,38 @@ const BODY = {
   azul: ['#3f72d8', '#25458f'],
   transparente: ['rgba(200, 236, 244, 0.45)', 'rgba(110, 170, 190, 0.7)'],
 };
-const WING = [[0, 3, 'K'], [0, 4, 'K'], [1, 4, 'K'], [0, 5, 'K'], [1, 5, 'F'], [2, 5, 'K'], [0, 6, 'K'], [1, 6, 'F'], [2, 6, 'F'], [3, 6, 'K'], [0, 7, 'K'], [1, 7, 'F'], [2, 7, 'f'], [0, 8, 'K'], [1, 8, 'f'], [2, 8, 'K'], [1, 9, 'K']];
+/* Asa de penas, saindo do lado do corpo (em cima da cabeça ela parecia orelha). O slime alado é desenhado
+   com 24 de largura e o corpo 4 px pra dentro; a asa é a metade esquerda, espelhada, desenhada antes do corpo.
+   Dois quadros, aberta e batendo. */
+const WING_W = 24, WING_OX = 4;
+const WING = [[
+  '........', '........', '........', '........', '........',
+  '....KK..', '..KKFFK.', '.KFFFFFK', 'KFFFFFf.', 'KFfFfF..',
+  '.KFKFK..', '..K.K...', '........', '........', '........', '........',
+], [
+  '........', '........', '........', '........', '........',
+  '........', '........', '...KKK..', '.KKFFFK.', 'KFFFFFf.',
+  'KFfFfFK.', '.KFKFK..', '..K.K...', '........', '........', '........',
+]];
+const WING_PX = { K: '#1a1c2c', F: '#eef3ff', f: '#b7c3df' };
+let wingFrame = 0;
 function drawSlime(cv, p) {
+  const w = p.asas ? WING_W : 16, ox = p.asas ? WING_OX : 0;
+  if (cv.width !== w) cv.width = w;
+  cv.height = 16;
+  cv.classList.toggle('winged', !!p.asas);
+  cv._p = p.asas ? p : null;
   const x = cv.getContext('2d');
-  x.clearRect(0, 0, 16, 16);
+  x.clearRect(0, 0, w, 16);
   const body = BODY[p.cor];
-  const put = (c, X, Y) => { x.fillStyle = c; x.fillRect(X, Y, 1, 1); };
+  if (p.asas) WING[wingFrame].forEach((row, Y) => {
+    for (let X = 0; X < 8; X++) {
+      const ch = row[X];
+      if (ch === '.') continue;
+      x.fillStyle = WING_PX[ch]; x.fillRect(X, Y, 1, 1); x.fillRect(w - 1 - X, Y, 1, 1);
+    }
+  });
+  const put = (c, X, Y) => { x.fillStyle = c; x.fillRect(X + ox, Y, 1, 1); };
   BASE.forEach((row, Y) => {
     for (let X = 0; X < 16; X++) {
       const ch = row[X];
@@ -750,7 +777,6 @@ function drawSlime(cv, p) {
       else if (ch === 'K' || ch === 'w') put(PX[ch], X, Y);
     }
   });
-  if (p.asas) WING.forEach(([X, Y, c]) => { const col = c === 'K' ? PX.K : c === 'F' ? '#eef3ff' : '#b7c3df'; put(col, X, Y); put(col, 15 - X, Y); });
   if (p.sad) {
     if (p.olhos === 2) {
       [[5, 9], [5, 10], [10, 9], [10, 10], [6, 8], [9, 8]].forEach(([X, Y]) => put(PX.K, X, Y));
@@ -779,6 +805,16 @@ function drawSlime(cv, p) {
     put(PX.H, 7, 4); put(PX.h, 8, 4);
   }
 }
+try {
+  if (!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    setInterval(() => {
+      const ws = document.querySelectorAll('canvas.winged');
+      if (!ws.length) return;
+      wingFrame = 1 - wingFrame;
+      ws.forEach(cv => { if (cv._p) drawSlime(cv, cv._p); });
+    }, 420);
+  }
+} catch (e) { /* sem animação: as asas ficam paradas */ }
 function sprite(p) {
   const cv = document.createElement('canvas');
   cv.width = 16; cv.height = 16;

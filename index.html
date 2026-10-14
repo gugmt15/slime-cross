@@ -1049,9 +1049,11 @@ function nameOf(id) {
   if (G.labels.has(id)) return G.labels.get(id);
   const c = C(id);
   if (!c || !c.parents) return id;
-  return tr('kid_of', { a: lab(c.parents[0]), b: lab(c.parents[1]) });
+  return tr('kid_of', { a: labP(c.parents[0]), b: labP(c.parents[1]) });
 }
 function lab(id) { const s = nameOf(id); return /^\d+$/.test(s) ? '#' + s : s; }
+/* Filhote que ainda não nasceu na árvore vira (filhote de A × B), entre parênteses, pra não se confundir com o × do cruzamento. */
+function labP(id) { const c = C(id); return G.labels.has(id) || !c || !c.parents ? lab(id) : '(' + lab(id) + ')'; }
 
 function render() {
   const V = G.V, t = G.P.target;
@@ -1351,7 +1353,7 @@ function renderEnd() {
     h.textContent = G.gaveup ? tr('e_answer') : tr('e_lost');
     p.textContent = G.gaveup ? tr('e_min_path', { n: G.P.par }) : tr(G.reason) + (LANG === 'ja' ? '' : ' ') + tr('e_example', { n: G.P.par });
     pathList = document.createElement('ol'); pathList.className = 'path';
-    G.P.path.forEach(pr => { const li = document.createElement('li'); li.textContent = lab(pr[0]) + ' × ' + lab(pr[1]); pathList.append(li); });
+    G.P.path.forEach(pr => { const li = document.createElement('li'); li.textContent = labP(pr[0]) + ' × ' + labP(pr[1]); pathList.append(li); });
     if (G.gaveup) { pathNote = document.createElement('p'); pathNote.textContent = tr('e_others'); }
   }
   const actions = document.createElement('div'); actions.className = 'actions';

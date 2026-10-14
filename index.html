@@ -516,6 +516,10 @@ function renderLangButtons() {
       const open = menu.hidden;
       closeLangMenus();
       menu.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) { /* abre pro lado que tem espaço: a lista não pode sair da tela */
+        menu.style.left = 'auto'; menu.style.right = '0';
+        if (menu.getBoundingClientRect().left < 8) { menu.style.right = 'auto'; menu.style.left = '0'; }
+      }
       if (open) { const cur = menu.querySelector('[aria-checked="true"]'); if (cur) cur.focus(); }
     });
     box.replaceChildren(btn, menu);

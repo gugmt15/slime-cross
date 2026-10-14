@@ -47,18 +47,23 @@ def evaluate(starters, t, key, reps=8):
 
 
 if __name__ == '__main__':
+    # uso: python gen4.py [quantos] [semente] [prefixo] [arquivo]
+    # treino: 100 20261014 lista4 list4.json · desafio do dia no modo difícil: 100 20261015 dia4 daily4.json
     N = int(sys.argv[1]) if len(sys.argv) > 1 else 100
-    rng = random.Random(20261014)
+    SEED = int(sys.argv[2]) if len(sys.argv) > 2 else 20261014
+    PREFIX = sys.argv[3] if len(sys.argv) > 3 else 'lista4'
+    OUT = sys.argv[4] if len(sys.argv) > 4 else 'list4.json'
+    rng = random.Random(SEED)
     out, tried, t0 = [], 0, time.time()
     while len(out) < N:
         tried += 1
-        key = 'lista4:' + str(tried)
+        key = PREFIX + ':' + str(tried)
         starters, t = candidate(rng, key)
         pi, pr, avg = evaluate(starters, t, key)
         if not (PI_MIN <= pi <= PI_MAX and pr <= PR_MAX):
             continue
         out.append({'k': key, 's': [''.join(str(a) + str(b) for a, b in s) for s in starters], 't': ''.join(map(str, t)), 'pi': pi, 'pr': pr, 'avg': avg})
-    json.dump(out, open('list4.json', 'w'), separators=(',', ':'))
+    json.dump(out, open(OUT, 'w'), separators=(',', ':'))
     pis = [o['pi'] for o in out]; prs = [o['pr'] for o in out]
     print('candidatos testados: %d, aceitos: %d, %.0f s' % (tried, len(out), time.time() - t0))
     print('intuitivo vence em média %.0f%%, ao acaso %.0f%%' % (100 * sum(pis) / len(pis), 100 * sum(prs) / len(prs)))

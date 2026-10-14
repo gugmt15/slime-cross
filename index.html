@@ -339,6 +339,7 @@ button.tut-card { cursor: pointer; font: inherit; color: var(--ink); }
 .pin-in canvas { width: 52px; height: 52px; flex: none; }
 .pin-label { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background: var(--accent); color: var(--accent-ink); padding: 1px 6px; border-radius: 4px; }
 .langs { position: relative; display: flex; }
+.topright { display: flex; gap: 6px; align-items: center; }
 .home .langs { align-self: flex-end; }
 .lang-btn { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); letter-spacing: 0.04em; }
 .lang-btn svg { width: 1.1em; height: 1.1em; flex: none; }
@@ -400,10 +401,12 @@ img { max-width: 100%; }
       <div class="gh-title" data-i18n="title"></div>
       <div class="sub" id="sub"></div>
     </div>
-    <div class="tools">
-      <button class="btn primary" id="btn-new-top" type="button" hidden data-i18n="new"></button>
+    <div class="topright">
       <div class="langs"></div>
       <button class="btn help-btn" id="btn-help" type="button" data-i18n-aria="howto_sum">?</button>
+    </div>
+    <div class="tools">
+      <button class="btn primary" id="btn-new-top" type="button" hidden data-i18n="new"></button>
       <button class="btn toggle" id="btn-easy" type="button" aria-pressed="false" data-i18n="easy"></button>
       <button class="btn" id="btn-reset" type="button" data-i18n="reset"></button>
     </div>

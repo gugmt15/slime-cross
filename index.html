@@ -230,9 +230,10 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 @keyframes shine { 0%, 100% { box-shadow: 0 0 0 2px var(--accent), 0 0 10px 2px var(--accent); } 50% { box-shadow: 0 0 0 3px var(--accent), 0 0 28px 10px var(--accent); } }
 @keyframes pop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 canvas.sprite.winged { width: auto !important; }
-canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animation: bob 1.4s steps(2) infinite; }
+canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animation: bob 1.4s ease-in-out infinite; transform-origin: 50% 100%; }
 .slime.dead canvas.sprite { animation: none; }
-@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+/* parado, o slime sobe e desce suave, achatando embaixo e esticando em cima */
+@keyframes bob { 0%, 100% { transform: translateY(0) scale(1.07, 0.93); } 50% { transform: translateY(-3px) scale(0.95, 1.06); } }
 @media (prefers-reduced-motion: reduce) { canvas.sprite, .slime.fresh, .slime.fresh.winner, .slime.fresh.winner canvas.sprite, .slime.wilting canvas.sprite { animation: none; } }
 
 .gens { display: flex; flex-direction: column; gap: 18px; }

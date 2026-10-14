@@ -215,6 +215,11 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 .slime.fresh.near { animation: pop 650ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both, nearflash 0.9s ease-in-out 1; }
 @keyframes nearflash { 0%, 100% { box-shadow: 0 0 0 2px var(--near); } 50% { box-shadow: 0 0 0 3px var(--near), 0 0 16px 4px var(--near); } }
 @media (prefers-reduced-motion: reduce) { .slime.fresh.near { animation: none; } }
+/* balão de "!" que sai do cartão do filhote quase certo, junto com o susto, e some */
+.balao { position: absolute; top: -30px; left: 50%; background: #ffffff; color: #1a1c2c; border: 2px solid #1a1c2c; border-radius: 8px; font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; line-height: 1; padding: 3px 9px 4px; pointer-events: none; opacity: 0; animation: balao 1.3s ease-out both; z-index: 3; }
+.balao::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 8px; height: 8px; background: #ffffff; border-right: 2px solid #1a1c2c; border-bottom: 2px solid #1a1c2c; transform: translateX(-50%) rotate(45deg); }
+@keyframes balao { 0% { opacity: 0; transform: translate(-50%, 8px) scale(0.4); } 15% { opacity: 1; transform: translate(-50%, -4px) scale(1.25); } 25% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -6px); } }
+@media (prefers-reduced-motion: reduce) { .balao { animation: none; } }
 /* susto do filhote quase certo: pulo rápido esticando e aterrissagem achatada */
 .slime canvas.sprite.surprise { animation: surprise 0.6s ease-out 1, bob 1.4s ease-in-out 0.6s infinite; }
 @keyframes surprise { 0% { transform: scale(1.14, 0.86); } 30% { transform: translateY(-12px) scale(0.88, 1.14); } 55% { transform: translateY(-9px) scale(0.95, 1.06); } 80% { transform: translateY(0) scale(1.12, 0.88); } 100% { transform: translateY(0) scale(1); } }
@@ -1194,6 +1199,9 @@ function makeCard(c) {
   /* filhote que nasce a um traço do alvo leva um susto: pula com cara de surpresa e depois volta ao normal */
   if (fresh.has(c.id) && c.parents && !isWin && hits(V, c.p, t) === V.keys.length - 1) {
     const at = (KID_START + birthIdx(c) * KID_GAP + KID_GROW) * 1000;
+    const balao = document.createElement('span'); balao.className = 'balao'; balao.textContent = '!'; balao.setAttribute('aria-hidden', 'true');
+    balao.style.animationDelay = (at / 1000) + 's';
+    b.append(balao);
     setTimeout(() => {
       drawSlime(sp, Object.assign({}, c.p, { surpreso: true }));
       sp.classList.add('surprise'); sp.style.animationDuration = '0.6s, ' + dur.toFixed(2) + 's'; sp.style.animationDelay = '0s, 0.6s';

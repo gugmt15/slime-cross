@@ -1133,7 +1133,7 @@ function makeCard(c) {
     const winner = match(V, c.p, t), near = !winner && hits(V, c.p, t) === V.keys.length - 1;
     b.style.animationDelay = winner || near ? d + 's, ' + (d + 0.55) + 's' : d + 's';
   }
-  b.className = 'slime' + (fresh.has(c.id) ? ' fresh' : '') + (match(V, c.p, t) ? ' hit' : '') + (!dead && !match(V, c.p, t) && hits(V, c.p, t) === V.keys.length - 1 ? ' near' : '') + (dead ? ' dead' : tired ? ' tired' : '') + (G.focus === c.id ? ' focus' : '');
+  b.className = 'slime' + (fresh.has(c.id) ? ' fresh' : '') + (match(V, c.p, t) ? ' hit' : '') + (c.parents && !dead && !match(V, c.p, t) && hits(V, c.p, t) === V.keys.length - 1 ? ' near' : '') + (dead ? ' dead' : tired ? ' tired' : '') + (G.focus === c.id ? ' focus' : '');
   if (fresh.has(c.id) && match(V, c.p, t)) b.classList.add('winner');
   b.style.height = cardH() + 'px';
   b.setAttribute('aria-pressed', G.sel.includes(c.id) ? 'true' : 'false');

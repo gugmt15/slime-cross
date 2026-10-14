@@ -338,11 +338,16 @@ button.tut-card { cursor: pointer; font: inherit; color: var(--ink); }
 .pin-in { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 10px; font-size: 1.05rem; font-weight: 700; }
 .pin-in canvas { width: 52px; height: 52px; flex: none; }
 .pin-label { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background: var(--accent); color: var(--accent-ink); padding: 1px 6px; border-radius: 4px; }
-.langs { display: flex; gap: 6px; }
+.langs { position: relative; display: flex; }
 .home .langs { align-self: flex-end; }
-.lang { border: 2px solid transparent; background: transparent; padding: 2px; border-radius: 5px; line-height: 0; cursor: pointer; }
-.lang[aria-pressed="true"] { border-color: var(--accent); }
-.lang svg { width: 28px; height: 19px; display: block; border-radius: 2px; box-shadow: 0 0 0 1px var(--line); }
+.lang-btn { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); letter-spacing: 0.04em; }
+.lang-btn svg { width: 1.1em; height: 1.1em; flex: none; }
+.lang-btn .caret { font-size: 0.7em; color: var(--muted); }
+.lang-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 10; min-width: 190px; display: flex; flex-direction: column; gap: 2px; padding: 6px; background: var(--surface); border: 2px solid var(--ink); border-radius: 8px; box-shadow: 3px 3px 0 var(--ink); text-align: left; }
+.lang-opt { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: inherit; font-size: 0.95rem; cursor: pointer; text-align: left; }
+.lang-opt:hover { background: var(--well); }
+.lang-opt[aria-checked="true"] { font-weight: 700; }
+.lang-opt .tick { color: var(--accent); font-weight: 700; }
 footer { font-size: 0.8rem; color: var(--muted); padding-bottom: 16px; max-width: 65ch; }
 .help-btn { min-width: 36px; font-family: var(--font-display); font-size: 1.05rem; padding-inline: 10px; }
 .help { border: 2px solid var(--ink); border-radius: 12px; background: var(--surface); color: var(--ink); padding: 16px; width: min(600px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow: auto; box-shadow: 4px 4px 0 var(--ink); }
@@ -395,9 +400,9 @@ img { max-width: 100%; }
       <div class="gh-title" data-i18n="title"></div>
       <div class="sub" id="sub"></div>
     </div>
-    <div class="langs"></div>
     <div class="tools">
       <button class="btn primary" id="btn-new-top" type="button" hidden data-i18n="new"></button>
+      <div class="langs"></div>
       <button class="btn help-btn" id="btn-help" type="button" data-i18n-aria="howto_sum">?</button>
       <button class="btn toggle" id="btn-easy" type="button" aria-pressed="false" data-i18n="easy"></button>
       <button class="btn" id="btn-reset" type="button" data-i18n="reset"></button>
@@ -479,23 +484,45 @@ function tr(key, v) {
   return s.replace(/\{(\w+)\}/g, (m, k) => (k in v ? v[k] : m)).replace(/\{\{/g, '{').replace(/\}\}/g, '}');
 }
 function vname(V) { return tr('v_' + V.id); }
-const FLAGS = {
-  pt: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#009c3b"/><polygon points="15,2.5 27.5,10 15,17.5 2.5,10" fill="#ffdf00"/><circle cx="15" cy="10" r="4.6" fill="#002776"/></svg>',
-  en: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#ffffff"/>' + [0, 2, 4, 6, 8, 10, 12].map(i => '<rect y="' + (i * 20 / 13) + '" width="30" height="' + (20 / 13) + '" fill="#b22234"/>').join('') + '<rect width="13" height="' + (7 * 20 / 13) + '" fill="#3c3b6e"/></svg>',
-  ja: '<svg viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#ffffff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg>',
-};
+const LANG_CODE = { pt: 'PT', en: 'EN', ja: 'JA' };
+const GLOBE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/></svg>';
+function closeLangMenus() {
+  document.querySelectorAll('.lang-menu').forEach(m => { m.hidden = true; });
+  document.querySelectorAll('.lang-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
+}
+/* Um botão só (globo + sigla do idioma atual) que abre a lista com o nome de cada idioma escrito nele mesmo. */
 function renderLangButtons() {
   document.querySelectorAll('.langs').forEach(box => {
-    box.setAttribute('role', 'group'); box.setAttribute('aria-label', tr('lang_aria'));
-    box.replaceChildren(...LANGS.map(l => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'lang';
-      b.innerHTML = FLAGS[l]; b.setAttribute('aria-label', tr('lang_' + l)); b.title = tr('lang_' + l);
-      b.setAttribute('aria-pressed', l === LANG ? 'true' : 'false');
-      b.addEventListener('click', () => setLang(l));
-      return b;
-    }));
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn lang-btn';
+    btn.innerHTML = GLOBE;
+    const code = document.createElement('span'); code.textContent = LANG_CODE[LANG];
+    const caret = document.createElement('span'); caret.className = 'caret'; caret.textContent = '▾'; caret.setAttribute('aria-hidden', 'true');
+    btn.append(code, caret);
+    btn.setAttribute('aria-label', tr('lang_aria') + ': ' + tr('lang_' + LANG));
+    btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+    const menu = document.createElement('div'); menu.className = 'lang-menu'; menu.hidden = true;
+    menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', tr('lang_aria'));
+    LANGS.forEach(l => {
+      const o = document.createElement('button'); o.type = 'button'; o.className = 'lang-opt';
+      o.setAttribute('role', 'menuitemradio'); o.setAttribute('aria-checked', l === LANG ? 'true' : 'false');
+      const name = document.createElement('span'); name.textContent = I18N['lang_' + l][LANGS.indexOf(l)];
+      o.append(name);
+      if (l === LANG) { const t = document.createElement('span'); t.className = 'tick'; t.textContent = '✓'; t.setAttribute('aria-hidden', 'true'); o.append(t); }
+      o.addEventListener('click', () => { closeLangMenus(); setLang(l); });
+      menu.append(o);
+    });
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = menu.hidden;
+      closeLangMenus();
+      menu.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) { const cur = menu.querySelector('[aria-checked="true"]'); if (cur) cur.focus(); }
+    });
+    box.replaceChildren(btn, menu);
   });
 }
+document.addEventListener('click', e => { if (!e.target.closest('.langs')) closeLangMenus(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLangMenus(); });
 function applyStatic() {
   document.documentElement.lang = { pt: 'pt-BR', en: 'en-US', ja: 'ja' }[LANG];
   document.title = tr('title');

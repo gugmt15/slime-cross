@@ -215,6 +215,10 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 .slime.fresh.near { animation: pop 650ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both, nearflash 0.9s ease-in-out 1; }
 @keyframes nearflash { 0%, 100% { box-shadow: 0 0 0 2px var(--near); } 50% { box-shadow: 0 0 0 3px var(--near), 0 0 16px 4px var(--near); } }
 @media (prefers-reduced-motion: reduce) { .slime.fresh.near { animation: none; } }
+/* "!" amarelo que salta em cima do filhote que nasce a um traço do alvo, e some */
+.bang { position: absolute; top: -18px; left: 50%; font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; line-height: 1; color: var(--near); text-shadow: -1px 0 var(--ink), 1px 0 var(--ink), 0 -1px var(--ink), 0 1px var(--ink); pointer-events: none; opacity: 0; animation: bang 1.3s ease-out both; z-index: 2; }
+@keyframes bang { 0% { opacity: 0; transform: translate(-50%, 8px) scale(0.4); } 18% { opacity: 1; transform: translate(-50%, -4px) scale(1.25); } 32% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -8px) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .bang { animation: none; } }
 .slime.hit { border-color: var(--accent); background: var(--well); box-shadow: 0 0 0 2px var(--accent), 0 0 14px 2px var(--accent); }
 .slime.fresh.winner { animation: pop 650ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both, shine 0.9s ease-in-out 3; }
 .slime.fresh.winner canvas.sprite { animation: jump 0.55s ease-in-out 4 both; }
@@ -1142,6 +1146,9 @@ function celebrate(card) {
   });
 }
 
+/* ordem em que cada filhote nasce: a da posição na tela, da esquerda pra direita (a árvore às vezes inverte a ninhada) */
+let BIRTH = new Map();
+function birthIdx(c) { return BIRTH.has(c.id) ? BIRTH.get(c.id) : (c.idx || 0); }
 function makeCard(c) {
   const V = G.V, t = G.P.target;
   const b = document.createElement('button');
@@ -1150,7 +1157,7 @@ function makeCard(c) {
   const dead = G.dead.has(c.id), u = usesOf(c.id);
   const tired = G.mods.aging && u >= AGE_LIMIT;
   if (fresh.has(c.id)) {
-    const d = KID_START + (c.idx || 0) * KID_GAP;
+    const d = KID_START + birthIdx(c) * KID_GAP;
     const winner = match(V, c.p, t), near = !winner && hits(V, c.p, t) === V.keys.length - 1;
     b.style.animationDelay = winner || near ? d + 's, ' + (d + 0.55) + 's' : d + 's';
   }
@@ -1166,13 +1173,18 @@ function makeCard(c) {
     : isSad && !fresh.has(c.id) ? Object.assign({}, c.p, { sad: true }) : c.p);
   if (isSad && !fresh.has(c.id)) b.classList.add('sad');
   if (isSad && fresh.has(c.id)) {
-    const sadAt = KID_START + 3 * KID_GAP + KID_GROW + 0.3 + (c.idx || 0) * 0.35;
+    const sadAt = KID_START + 3 * KID_GAP + KID_GROW + 0.3 + birthIdx(c) * 0.35;
     setTimeout(() => { drawSlime(sp, Object.assign({}, c.p, { sad: true })); b.classList.add('wilting'); }, sadAt * 1000);
   }
   if (fresh.has(c.id) && isWin) {
-    const jumpAt = KID_START + (c.idx || 0) * KID_GAP + KID_GROW;
+    const jumpAt = KID_START + birthIdx(c) * KID_GAP + KID_GROW;
     sp.style.animationDelay = jumpAt + 's';
     setTimeout(() => { drawSlime(sp, Object.assign({}, c.p, { happy: true })); celebrate(b); }, jumpAt * 1000);
+  }
+  if (fresh.has(c.id) && c.parents && !isWin && hits(V, c.p, t) === V.keys.length - 1) {
+    const bang = document.createElement('span'); bang.className = 'bang'; bang.textContent = '!'; bang.setAttribute('aria-hidden', 'true');
+    bang.style.animationDelay = (KID_START + birthIdx(c) * KID_GAP + KID_GROW) + 's';
+    b.append(bang);
   }
   if (G.justPicked === c.id) { sp.classList.add('pick'); sp.style.animationDelay = '0s, 0.5s'; } /* o atraso aleatório do balanço engolia o pulo */
   b.append(sp);
@@ -1266,6 +1278,8 @@ function renderTree() {
   });
   svg.append(...calm, ...hot);
   canvas.append(svg);
+  BIRTH = new Map();
+  G.crosses.forEach(cr => cr.kids.slice().sort((a, b) => g.node(a).x - g.node(b).x).forEach((k, i) => BIRTH.set(k, i)));
   g.nodes().forEach(id => {
     const n = g.node(id);
     if (n.cross !== undefined) {
@@ -1468,7 +1482,7 @@ function animateCross(a, b) {
   const first = born.length && $('tree').querySelector('[data-id="' + CSS.escape(born[0]) + '"]');
   if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
   if (G.holdEnd) {
-    const waitIdx = G.status === 'won' && winIdx >= 0 ? winIdx : 3;
+    const waitIdx = G.status === 'won' && winIdx >= 0 ? birthIdx(C(last.kids[winIdx])) : 3;
     const wait = (KID_START + waitIdx * KID_GAP + KID_GROW) * 1000 + (G.status === 'won' ? 1400 : G.gaveup ? 500 : 2600); /* na derrota, espera a última ninhada murchar */
     setTimeout(() => {
       G.holdEnd = false;

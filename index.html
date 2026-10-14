@@ -59,6 +59,7 @@
   --accent: #4a8526;
   --accent-ink: #ffffff;
   --danger: #b4432f;
+  --deadbg: #cfd7cb;
   --near: #d9a514;
   --font-display: "Pixelify Sans", "Courier New", monospace;
   --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
@@ -68,12 +69,13 @@
   :root:not([data-theme="light"]) {
     --bg: #101612; --grid: #17201a; --surface: #172019; --well: #2a372e;
     --ink: #e2ebe3; --muted: #97a99c; --line: #2e3c33;
-    --accent: #8cc35a; --accent-ink: #0f1a10; --danger: #e8735c; --near: #e6c04a;
+    --accent: #8cc35a; --accent-ink: #0f1a10; --danger: #e8735c; --near: #e6c04a; --deadbg: #070a08;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --near: #e6c04a;
+  --deadbg: #070a08;
   --bg: #101612; --grid: #17201a; --surface: #172019; --well: #2a372e;
   --ink: #e2ebe3; --muted: #97a99c; --line: #2e3c33;
   --accent: #8cc35a; --accent-ink: #0f1a10; --danger: #e8735c;
@@ -209,8 +211,7 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 .slime .uses i.left { background: var(--ink); }
 .slime .tag { font-size: 0.66rem; color: var(--danger); font-weight: 700; }
 .slime.tired { opacity: 0.6; }
-.slime.dead { opacity: 0.45; border-style: dashed; }
-.slime.dead canvas { filter: grayscale(1); }
+.slime.dead { background: var(--deadbg); border-style: dashed; border-color: var(--muted); }
 .slime.fresh { animation: pop 650ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both; }
 .slime.near { border-color: var(--near); box-shadow: 0 0 0 2px var(--near); }
 .slime.fresh.near { animation: pop 650ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both, nearflash 0.9s ease-in-out 1; }
@@ -247,7 +248,11 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 @media (prefers-reduced-motion: reduce) { .slime canvas.sprite.pick { animation: none; } }
 canvas.sprite.winged { width: auto !important; }
 canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animation: bob 1.4s ease-in-out infinite; transform-origin: 50% 100%; }
-.slime.dead canvas.sprite { animation: none; }
+.slime.dead canvas.sprite { animation: none; transform: translateY(2px) scale(1.06, 0.92); }
+/* de vez em quando um fantasminha sai do morto e sobe */
+.slime .alma { position: absolute; left: 50%; top: 4px; width: 26px; height: 26px; margin-left: -13px; opacity: 0; pointer-events: none; image-rendering: pixelated; image-rendering: crisp-edges; animation: alma 7s ease-out infinite; z-index: 2; }
+@keyframes alma { 0% { opacity: 0; transform: translateY(6px) scale(0.6); } 5% { opacity: 0.9; } 28% { opacity: 0.7; transform: translateY(-30px) scale(1); } 38%, 100% { opacity: 0; transform: translateY(-40px) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .slime .alma { animation: none; } }
 /* parado, o slime sobe e desce suave, achatando embaixo e esticando em cima */
 @keyframes bob { 0%, 100% { transform: translateY(0) scale(1.07, 0.93); } 50% { transform: translateY(-3px) scale(0.95, 1.06); } }
 @media (prefers-reduced-motion: reduce) { canvas.sprite, .slime.fresh, .slime.fresh.winner, .slime.fresh.winner canvas.sprite, .slime.wilting canvas.sprite { animation: none; } }
@@ -875,6 +880,9 @@ function drawSlime(cv, p) {
       [[11, 10 + tearFrame], [11, 11 + tearFrame]].forEach(([X, Y]) => put('#9fd8ff', X, Y));
     }
     [[6, 12], [7, 11], [8, 11], [9, 12]].forEach(([X, Y]) => put(PX.K, X, Y));
+  } else if (p.morto) {
+    if (p.olhos === 2) [[4, 8], [6, 8], [5, 9], [4, 10], [6, 10], [9, 8], [11, 8], [10, 9], [9, 10], [11, 10]].forEach(([X, Y]) => put(PX.K, X, Y));
+    else [[6, 7], [9, 7], [7, 8], [8, 8], [7, 9], [8, 9], [6, 10], [9, 10]].forEach(([X, Y]) => put(PX.K, X, Y));
   } else if (p.surpreso) {
     if (p.olhos === 2) [[5, 8], [5, 9], [5, 10], [10, 8], [10, 9], [10, 10]].forEach(([X, Y]) => put(PX.K, X, Y));
     else {
@@ -919,6 +927,13 @@ try {
     }, 450);
   }
 } catch (e) { /* sem animação: a lágrima fica parada */ }
+function drawGhost(cv) {
+  cv.width = 16; cv.height = 16;
+  const x = cv.getContext('2d');
+  const put = (c, X, Y) => { x.fillStyle = c; x.fillRect(X, Y, 1, 1); };
+  BASE.forEach((row, Y) => { for (let X = 0; X < 16; X++) { const ch = row[X]; if (ch === 'L' || ch === 'w') put('#eef3ff', X, Y); else if (ch === 'l') put('#b7c3df', X, Y); else if (ch === 'K') put('#7d8aa6', X, Y); } });
+  [[4, 9], [5, 9], [10, 9], [11, 9], [7, 11], [8, 11]].forEach(([X, Y]) => put('#5a6478', X, Y));
+}
 function sprite(p) {
   const cv = document.createElement('canvas');
   cv.width = 16; cv.height = 16;
@@ -1221,7 +1236,7 @@ function makeCard(c) {
   const lastKids = G.crosses.length ? G.crosses[G.crosses.length - 1].kids : [];
   const isSad = G.status === 'lost' && !G.gaveup && lastKids.includes(c.id);
   const sp = sprite(isWin && G.status === 'won' && !fresh.has(c.id) ? Object.assign({}, c.p, { happy: true })
-    : isSad && !fresh.has(c.id) ? Object.assign({}, c.p, { sad: true }) : c.p);
+    : isSad && !fresh.has(c.id) ? Object.assign({}, c.p, { sad: true }) : dead ? Object.assign({}, c.p, { morto: true }) : c.p);
   if (isSad && !fresh.has(c.id)) b.classList.add('sad');
   if (isSad && fresh.has(c.id)) {
     const sadAt = KID_START + 3 * KID_GAP + KID_GROW + 0.3 + birthIdx(c) * 0.35;
@@ -1266,7 +1281,12 @@ function makeCard(c) {
     b.append(m);
   }
   if (G.reveal) { const g = document.createElement('span'); g.className = 'geno'; g.textContent = trueGeno(V, c).join(' '); b.append(g); }
-  if (dead) { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = tr('dead'); b.append(tg); }
+  if (dead) {
+    const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = tr('dead'); b.append(tg);
+    const alma = document.createElement('canvas'); alma.className = 'alma'; alma.setAttribute('aria-hidden', 'true'); drawGhost(alma);
+    alma.style.animationDelay = (-((hashStr(c.id) >>> 5) % 70) / 10).toFixed(1) + 's';
+    b.append(alma);
+  }
   else if (G.mods.aging) {
     const us = document.createElement('span'); us.className = 'uses';
     for (let k = 0; k < AGE_LIMIT; k++) { const i = document.createElement('i'); if (k < AGE_LIMIT - u) i.className = 'left'; us.append(i); }

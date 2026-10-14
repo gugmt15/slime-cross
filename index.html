@@ -815,10 +815,16 @@ const WING = [[
   '.KFKFK..', '..K.K...', '........', '........', '........', '........',
 ], [
   '........', '........', '........', '........', '........',
+  '........', '...KKK..', '.KKFFFK.', 'KFFFFFf.', 'KFfFfF..',
+  '.KFKFK..', '..K.K...', '........', '........', '........', '........',
+], [
+  '........', '........', '........', '........', '........',
   '........', '........', '...KKK..', '.KKFFFK.', 'KFFFFFf.',
   'KFfFfFK.', '.KFKFK..', '..K.K...', '........', '........', '........',
 ]];
 const WING_PX = { K: '#1a1c2c', F: '#eef3ff', f: '#b7c3df' };
+/* batida em quatro quadros: aberta, meio, fechada, meio */
+const WING_SEQ = [0, 1, 2, 1];
 let wingFrame = 0;
 function drawSlime(cv, p) {
   const w = p.asas ? WING_W : 16, ox = p.asas ? WING_OX : 0;
@@ -829,7 +835,7 @@ function drawSlime(cv, p) {
   const x = cv.getContext('2d');
   x.clearRect(0, 0, w, 16);
   const body = BODY[p.cor];
-  if (p.asas) WING[wingFrame].forEach((row, Y) => {
+  if (p.asas) WING[WING_SEQ[wingFrame]].forEach((row, Y) => {
     for (let X = 0; X < 8; X++) {
       const ch = row[X];
       if (ch === '.') continue;
@@ -885,9 +891,9 @@ try {
     setInterval(() => {
       const ws = document.querySelectorAll('canvas.winged');
       if (!ws.length) return;
-      wingFrame = 1 - wingFrame;
+      wingFrame = (wingFrame + 1) % WING_SEQ.length;
       ws.forEach(cv => { if (cv._p) drawSlime(cv, cv._p); });
-    }, 420);
+    }, 140);
   }
 } catch (e) { /* sem animação: as asas ficam paradas */ }
 function sprite(p) {

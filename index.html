@@ -1823,14 +1823,16 @@ function renderTut() {
     });
     const say = tEl('div', 'tut-say');
     say.append(tEl('p', null, tr('tm_same')), tEl('p', null, tr(blueNoHorn ? 'tm_yes' : 'tm_no')), tEl('p', null, tr('tm_fixed')));
-    parts.push(grid, say);
-    const act = tEl('div', 'tut-actions');
-    act.append(tBtn(tr('tm_shuffle'), false, () => {
+    /* o botão de trocar fica entre a tabela e o texto, em destaque: é a parte que a pessoa tem que fazer */
+    const swap = tEl('div', 'tut-actions');
+    swap.append(tBtn(tr('tm_shuffle'), true, () => {
       const shuf = cur => { let q; do { q = [0, 1, 2, 3]; for (let i = 3; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [q[i], q[j]] = [q[j], q[i]]; } } while (q.join() === cur.join()); return q; };
       tutMix = { cor: tutMix.cor, chifre: shuf(tutMix.chifre) };
       tutMoved = { chifre: true };
       renderTut();
     }));
+    parts.push(grid, swap, say);
+    const act = tEl('div', 'tut-actions');
     if (tutStep < TSTEPS.length - 1) act.append(tBtn(tr('next'), true, tNext));
     else {
       parts.push(tEl('p', 'tut-text', tr('tut_done')));

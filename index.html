@@ -1465,7 +1465,7 @@ function renderTree() {
   if (G.focus) relevant.add(G.focus);
   const CW = 80, CH = cardH(), GAP = 10, SLOT = CW + GAP, BAND = 56, XH = 22;
   const GW = 4 * SLOT - GAP; /* largura de uma ninhada */
-  const rowTop = g => 4 + g * (CH + BAND);
+  const rowTop = g => 12 + g * (CH + BAND); /* folga em cima pra marca da ameaça no canto do cartão não cortar */
   const pos = new Map(), gen = new Map(), rows = [];
   const occupy = (g, l, r) => { (rows[g] = rows[g] || []).push([l, r]); };
   /* iniciais no meio da área da árvore; a área nunca encolhe, então crescer a árvore não arrasta ninguém */
@@ -1488,7 +1488,7 @@ function renderTree() {
     xn.push({ id: 'x' + i, i, cx: left + GW / 2, cy: rowTop(g) - BAND / 2, w, text: xt });
   });
   let gw = base, gh = 0;
-  pos.forEach(p => { gw = Math.max(gw, p.x + CW + 4); gh = Math.max(gh, p.y + CH + 4); });
+  pos.forEach(p => { gw = Math.max(gw, p.x + CW + 12); gh = Math.max(gh, p.y + CH + 4); });
   const canvas = document.createElement('div'); canvas.className = 'tree-canvas';
   canvas.style.width = gw + 'px'; canvas.style.height = gh + 'px';
   const svgNS = 'http://www.w3.org/2000/svg';

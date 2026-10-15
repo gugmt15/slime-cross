@@ -1009,8 +1009,10 @@ const $ = id => document.getElementById(id);
 const IS_LIVE = /(^|\.)slimecross\.com$/.test(location.hostname);
 const C = id => G.P.reg.get(id);
 const EPOCH = Date.UTC(2026, 9, 5);
+/* só nos testes: ?dia=12 joga o desafio do nº 12, pra conferir um dia que ainda não chegou */
+const TEST_DAY = !IS_LIVE && +new URLSearchParams(location.search).get('dia');
 function today() {
-  const d = new Date();
+  const d = TEST_DAY ? new Date(Date.UTC(2026, 9, 4 + TEST_DAY) + new Date().getTimezoneOffset() * 6e4 + 12 * 36e5) : new Date();
   const y = d.getFullYear(), m = d.getMonth(), dd = d.getDate();
   return {
     key: y + '-' + String(m + 1).padStart(2, '0') + '-' + String(dd).padStart(2, '0'),

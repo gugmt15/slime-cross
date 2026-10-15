@@ -142,8 +142,19 @@ details.howto li { margin-bottom: 4px; }
 .threat { grid-column: 1 / -1; border-top: 1.5px dashed var(--line); padding-top: 10px; font-size: 0.92rem; display: flex; gap: 8px; align-items: baseline; }
 .threat b { color: var(--danger); flex: none; }
 .threat.done b { color: var(--muted); }
-.threat .tline { display: block; }
+.threat .tline { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; align-items: center; }
 .threat .tline.past { color: var(--muted); }
+.threat .tline.past .prey { opacity: 0.45; }
+/* presa da ameaça: o traço desenhado em pixel, com a caveira do lado */
+.prey { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.prey canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+.prey .sk { font-size: 0.95rem; line-height: 1; }
+/* ventania: os riscos horizontais do ataque, em miniatura */
+.vento { display: inline-flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.vento i { display: block; height: 2px; background: #b7c3df; border-radius: 1px; }
+.vento i:nth-child(1) { width: 14px; margin-left: 2px; }
+.vento i:nth-child(2) { width: 10px; }
+.vento i:nth-child(3) { width: 12px; margin-left: 4px; }
 
 .rules-box { display: flex; flex-direction: column; gap: 6px; }
 .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 12px; }
@@ -210,6 +221,8 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 .slime .uses i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--ink); display: block; }
 .slime .uses i.left { background: var(--ink); }
 .slime .tag { font-size: 0.66rem; color: var(--danger); font-weight: 700; }
+/* quem a próxima ameaça vai matar: a ameaça no canto do cartão */
+.slime .risk { position: absolute; top: -9px; right: -8px; background: var(--surface); border: 1.5px solid var(--danger); border-radius: 99px; padding: 2px 4px; font-size: 14px; line-height: 1; z-index: 2; }
 .slime.tired { opacity: 0.6; }
 .slime.dead { border-style: dashed; background: color-mix(in srgb, var(--surface) 45%, transparent); border-color: color-mix(in srgb, var(--line) 45%, transparent); }
 .slime.dead canvas.sprite, .slime.dead .lab, .slime.dead .tag { opacity: 0.45; }
@@ -283,6 +296,11 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 }
 .bar-in { max-width: 760px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
 .pips { display: flex; gap: 4px; flex: none; margin-left: auto; }
+.pips.threats { padding-top: 20px; }
+/* o quadradinho do cruzamento em que a ameaça chega: borda vermelha e a ameaça em cima, mesmo depois de usado */
+.pip { position: relative; }
+.pip.danger { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
+.pip .m { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 15px; line-height: 1; white-space: nowrap; }
 .bar-actions { flex: 1 1 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .pip { width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 3px; }
 .pip.used { background: var(--ink); }
@@ -952,6 +970,45 @@ try {
     }, 450);
   }
 } catch (e) { /* sem animação: a lágrima fica parada */ }
+/* ícone da presa de cada ameaça: só o traço, em pixel. O lobo mostra a cabeça lisa com o chifre pontilhado no lugar
+   onde ele deveria estar; o sol mostra um slime azul inteiro, pra não confundir com a cabeça. */
+function drawPrey(cv, id) {
+  const x = cv.getContext('2d');
+  const put = (c, X, Y) => { x.fillStyle = c; x.fillRect(X, Y, 1, 1); };
+  if (id === 'olhos') {
+    cv.width = 6; cv.height = 5;
+    for (let Y = 0; Y < 5; Y++) for (let X = 0; X < 6; X++) put(BODY.vermelho[0], X, Y);
+    for (let X = 1; X <= 4; X++) for (let Y = 1; Y <= 3; Y++) put(PX.w, X, Y);
+    [[2, 2], [3, 2], [2, 3], [3, 3]].forEach(([X, Y]) => put(PX.K, X, Y));
+  } else if (id === 'chifre') {
+    cv.width = 8; cv.height = 9;
+    const b = BODY.vermelho[0];
+    [[3, 0], [4, 1], [2, 2], [4, 3], [2, 1], [3, 3]].forEach(([X, Y]) => put('#97a99c', X, Y));
+    [[2, 4, 5], [1, 5, 6], [0, 6, 7], [0, 7, 7], [0, 8, 7]].forEach(([x0, Y, x1]) => { for (let X = x0; X <= x1; X++) put(X === x0 || X === x1 ? PX.K : b, X, Y); });
+    for (let X = 2; X <= 5; X++) put(PX.K, X, 4);
+    put(PX.w, 2, 6); put(PX.w, 3, 6); put(PX.w, 2, 7);
+  } else if (id === 'azul') {
+    drawSlime(cv, { cor: 'azul', chifre: true, olhos: 2 });
+  } else {
+    cv.width = 18; cv.height = 7;
+    WING[0].slice(5, 12).forEach((row, Y) => { for (let X = 0; X < 8; X++) { const ch = row[X]; if (ch !== '.') { put(WING_PX[ch], X, Y); put(WING_PX[ch], 17 - X, Y); } } });
+  }
+  const sc = id === 'azul' ? 2 : id === 'asas' ? 3 : 4;
+  cv.style.width = (cv.width * sc) + 'px'; cv.style.height = (cv.height * sc) + 'px';
+}
+function preyIcon(id) {
+  const w = document.createElement('span'); w.className = 'prey'; w.setAttribute('aria-hidden', 'true');
+  const cv = document.createElement('canvas'); drawPrey(cv, id); w.append(cv);
+  const sk = document.createElement('span'); sk.className = 'sk'; sk.textContent = '☠️'; w.append(sk);
+  return w;
+}
+/* marca pequena da ameaça: o bicho, ou os riscos de vento */
+function threatMark(id) {
+  if (id !== 'asas') { const e = document.createElement('span'); e.textContent = ATTACK[id][1]; return e; }
+  const v = document.createElement('span'); v.className = 'vento';
+  for (let k = 0; k < 3; k++) v.append(document.createElement('i'));
+  return v;
+}
 function drawGhost(cv) {
   cv.width = 16; cv.height = 16;
   const x = cv.getContext('2d');
@@ -1224,9 +1281,11 @@ function render() {
   const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
   $('threat-text').replaceChildren(...Es.map((x, i) => {
     const ln = document.createElement('span'); ln.className = 'tline' + (i < G.fired ? ' past' : '');
-    ln.textContent = cap(i < G.fired
+    const tx = document.createElement('span');
+    tx.textContent = cap(i < G.fired
       ? tr(G.killed[i] === 1 ? 'threat_after1' : 'threat_aftern', { who: tr('who_' + x.E.id), n: x.at, k: G.killed[i] })
       : tr('threat_before', { n: x.at, txt: tr('ev_' + x.E.id) }));
+    ln.append(preyIcon(x.E.id), tx);
     return ln;
   }));
   $('threat').classList.toggle('done', G.fired >= Es.length);
@@ -1235,7 +1294,13 @@ function render() {
 
   renderTree();
   $('pop-count').textContent = tr('count', { n: G.pop.length });
-  $('pips').replaceChildren(...Array.from({ length: V.max }, (_, i) => { const e = document.createElement('span'); e.className = 'pip' + (i < G.crosses.length ? ' used' : ''); return e; }));
+  $('pips').classList.toggle('threats', G.P.Es.length > 0);
+  $('pips').replaceChildren(...Array.from({ length: V.max }, (_, i) => {
+    const e = document.createElement('span'); e.className = 'pip' + (i < G.crosses.length ? ' used' : '');
+    const ev = G.P.Es.find(x => x.at === i + 1);
+    if (ev) { e.classList.add('danger'); const m = document.createElement('span'); m.className = 'm'; m.setAttribute('aria-hidden', 'true'); m.append(threatMark(ev.E.id)); e.append(m); }
+    return e;
+  }));
   renderBar();
   renderToast();
   renderEnd();
@@ -1338,6 +1403,8 @@ function makeCard(c) {
     b.append(m);
   }
   if (G.reveal) { const g = document.createElement('span'); g.className = 'geno'; g.textContent = trueGeno(V, c).join(' '); b.append(g); }
+  const nextE = G.status === 'playing' && !G.dead.has(c.id) && !dph ? G.P.Es[G.fired] : null;
+  if (nextE && killedBy(nextE.E, c.p)) { const r = document.createElement('span'); r.className = 'risk'; r.setAttribute('aria-hidden', 'true'); r.append(threatMark(nextE.E.id)); b.append(r); }
   if (dead) {
     const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = tr(gone ? 'gone_wind' : 'dead'); b.append(tg);
     if (!gone) {

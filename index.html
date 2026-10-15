@@ -863,11 +863,12 @@ function drawSlime(cv, p) {
   cv.classList.toggle('winged', !!p.asas);
   cv.classList.toggle('crying', !!p.sad);
   cv._sad = p.sad ? p : null;
-  cv._p = p.asas ? p : null;
+  /* morto não bate asa: fica com a asa fechada, caída, e sai da lista da batida */
+  cv._p = p.asas && !p.morto ? p : null;
   const x = cv.getContext('2d');
   x.clearRect(0, 0, w, 16);
   const body = BODY[p.cor];
-  if (p.asas) WING[WING_SEQ[wingFrame]].forEach((row, Y) => {
+  if (p.asas) WING[p.morto ? 2 : WING_SEQ[wingFrame]].forEach((row, Y) => {
     for (let X = 0; X < 8; X++) {
       const ch = row[X];
       if (ch === '.') continue;

@@ -330,6 +330,8 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 .badge { position: absolute; top: -2px; right: 12px; font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; background: var(--danger); color: #ffffff; padding: 1px 8px; border-radius: 99px; }
 .btn.ghost { border-color: transparent; background: transparent; padding-inline: 4px; }
 .gamehead { align-items: center; }
+/* os botões de modo ficam numa linha própria, à esquerda, embaixo do título, igual em qualquer largura de tela */
+.gamehead .tools { flex: 1 1 100%; }
 .gh-mid { flex: 1 1 auto; min-width: 0; }
 .gh-title { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; line-height: 1.1; }
 .tut { display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }

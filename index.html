@@ -545,7 +545,6 @@ img { max-width: 100%; }
 </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
 <script>
 /* ---------- idiomas ---------- */
 const LANGS = ['pt', 'en', 'ja'];
@@ -1440,26 +1439,39 @@ function applyZoom() {
 function setZoom(z) { if (!G) return; G.zoom = Math.max(0.3, Math.min(1.6, z)); applyZoom(); }
 function fitZoom() { const w = $('tree').clientWidth - 4; return TREE_SIZE.w ? Math.min(1, w / TREE_SIZE.w) : 1; }
 
-/* Árvore: cada cruzamento é um nó com o número dele; os dois pais descem até ele, e dele saem os 4 filhotes. */
+/* Árvore: cada cruzamento é um nó com o número dele; os dois pais descem até ele, e dele saem os 4 filhotes.
+   Ninguém muda de lugar depois que aparece: A, B e C ficam fixos no topo, cada geração tem a sua linha, e cada
+   ninhada nova entra embaixo dos pais, no primeiro espaço livre da linha dela, sem empurrar as que já estão lá. */
 function renderTree() {
   const host = $('tree');
   const relevant = new Set(G.sel);
   if (G.focus) relevant.add(G.focus);
-  if (!window.dagre) { renderRows(host); return; }
-  const CW = 80, CH = cardH();
-  const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: 'TB', nodesep: 10, ranksep: 30, edgesep: 8, marginx: 4, marginy: 4 });
-  g.setDefaultEdgeLabel(() => ({}));
-  G.P.starters.forEach(c => g.setNode(c.id, { width: CW, height: CH }));
+  const CW = 80, CH = cardH(), GAP = 10, SLOT = CW + GAP, BAND = 56, XH = 22;
+  const GW = 4 * SLOT - GAP; /* largura de uma ninhada */
+  const rowTop = g => 4 + g * (CH + BAND);
+  const pos = new Map(), gen = new Map(), rows = [];
+  const occupy = (g, l, r) => { (rows[g] = rows[g] || []).push([l, r]); };
+  /* iniciais no meio da área da árvore; a área nunca encolhe, então crescer a árvore não arrasta ninguém */
+  if (!G.treeBase && host.clientWidth) G.treeBase = Math.max(8 + GW, host.clientWidth - 4); /* medida uma vez por partida */
+  const base = G.treeBase || 8 + GW;
+  const off = Math.round(base / 2 - (3 * SLOT - GAP) / 2);
+  G.P.starters.forEach((c, k) => { pos.set(c.id, { x: off + k * SLOT, y: rowTop(0) }); gen.set(c.id, 0); });
+  occupy(0, off, off + 3 * SLOT - GAP);
+  const xn = [];
   G.crosses.forEach((cr, i) => {
-    const x = 'x' + i;
+    const pa = pos.get(cr.a), pb = pos.get(cr.b);
+    const g = Math.max(gen.get(cr.a), gen.get(cr.b)) + 1;
+    let left = Math.max(4, (pa.x + pb.x) / 2 + CW / 2 - GW / 2);
+    const taken = (rows[g] || []).slice().sort((u, v) => u[0] - v[0]);
+    for (const [l, r] of taken) if (left < r + GAP && left + GW + GAP > l) left = r + GAP;
+    occupy(g, left, left + GW);
+    cr.kids.forEach((k, n) => { pos.set(k, { x: left + n * SLOT, y: rowTop(g) }); gen.set(k, g); });
     const xt = lab(cr.a) + ' × ' + lab(cr.b);
-    g.setNode(x, { width: Math.ceil(22 + xt.length * 7.4), height: 22, cross: i, text: xt });
-    g.setEdge(cr.a, x); g.setEdge(cr.b, x);
-    cr.kids.forEach(k => { g.setNode(k, { width: CW, height: CH }); g.setEdge(x, k); });
+    const w = Math.ceil(22 + xt.length * 7.4);
+    xn.push({ id: 'x' + i, i, cx: left + GW / 2, cy: rowTop(g) - BAND / 2, w, text: xt });
   });
-  dagre.layout(g);
-  const gw = Math.ceil(g.graph().width), gh = Math.ceil(g.graph().height);
+  let gw = base, gh = 0;
+  pos.forEach(p => { gw = Math.max(gw, p.x + CW + 4); gh = Math.max(gh, p.y + CH + 4); });
   const canvas = document.createElement('div'); canvas.className = 'tree-canvas';
   canvas.style.width = gw + 'px'; canvas.style.height = gh + 'px';
   const svgNS = 'http://www.w3.org/2000/svg';
@@ -1469,60 +1481,39 @@ function renderTree() {
   const hotCross = new Set();
   G.crosses.forEach((cr, i) => { if (relevant.has(cr.a) || relevant.has(cr.b) || cr.kids.some(k => relevant.has(k))) hotCross.add('x' + i); });
   const calm = [], hot = [];
-  g.edges().forEach(e => {
-    const pts = g.edge(e).points;
-    let d = 'M' + pts[0].x + ' ' + pts[0].y;
-    for (let i = 1; i < pts.length - 1; i++) {
-      const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
-      d += ' Q' + pts[i].x + ' ' + pts[i].y + ' ' + mx + ' ' + my;
-    }
-    const last = pts[pts.length - 1];
-    d += ' L' + last.x + ' ' + last.y;
+  const link = (x1, y1, x2, y2, isHot) => {
+    const my = (y1 + y2) / 2;
     const path = document.createElementNS(svgNS, 'path');
-    path.setAttribute('d', d);
-    const isHot = hotCross.has(e.w) ? relevant.has(e.v) || G.crosses[+e.w.slice(1)].kids.some(k => relevant.has(k))
-      : hotCross.has(e.v) && (relevant.has(e.w) || relevant.has(G.crosses[+e.v.slice(1)].a) || relevant.has(G.crosses[+e.v.slice(1)].b));
+    path.setAttribute('d', 'M' + x1 + ' ' + y1 + ' C' + x1 + ' ' + my + ' ' + x2 + ' ' + my + ' ' + x2 + ' ' + y2);
     if (isHot) { path.setAttribute('class', 'hot'); hot.push(path); } else calm.push(path);
+  };
+  xn.forEach(n => {
+    const cr = G.crosses[n.i], h = hotCross.has(n.id);
+    [cr.a, cr.b].forEach(p => { const q = pos.get(p); link(q.x + CW / 2, q.y + CH, n.cx, n.cy - XH / 2, h && (relevant.has(p) || cr.kids.some(k => relevant.has(k)))); });
+    cr.kids.forEach(k => { const q = pos.get(k); link(n.cx, n.cy + XH / 2, q.x + CW / 2, q.y, h && (relevant.has(k) || relevant.has(cr.a) || relevant.has(cr.b))); });
   });
   svg.append(...calm, ...hot);
   canvas.append(svg);
   BIRTH = new Map();
-  G.crosses.forEach(cr => cr.kids.slice().sort((a, b) => g.node(a).x - g.node(b).x).forEach((k, i) => BIRTH.set(k, i)));
-  g.nodes().forEach(id => {
-    const n = g.node(id);
-    if (n.cross !== undefined) {
-      const x = document.createElement('div');
-      x.className = 'xnode' + (hotCross.has(id) ? ' hot' : '');
-      x.style.left = (n.x - n.width / 2) + 'px'; x.style.top = (n.y - n.height / 2) + 'px';
-      x.style.width = n.width + 'px'; x.style.height = n.height + 'px';
-      x.textContent = n.text;
-      x.title = n.text;
-      canvas.append(x);
-    } else {
-      const card = makeCard(C(id));
-      card.style.left = (n.x - CW / 2) + 'px'; card.style.top = (n.y - CH / 2) + 'px';
-      canvas.append(card);
-    }
+  G.crosses.forEach(cr => cr.kids.forEach((k, i) => BIRTH.set(k, i)));
+  xn.forEach(n => {
+    const x = document.createElement('div');
+    x.className = 'xnode' + (hotCross.has(n.id) ? ' hot' : '');
+    x.style.left = (n.cx - n.w / 2) + 'px'; x.style.top = (n.cy - XH / 2) + 'px';
+    x.style.width = n.w + 'px'; x.style.height = XH + 'px';
+    x.textContent = n.text; x.title = n.text;
+    canvas.append(x);
+  });
+  pos.forEach((p, id) => {
+    const card = makeCard(C(id));
+    card.style.left = p.x + 'px'; card.style.top = p.y + 'px';
+    canvas.append(card);
   });
   const sizer = document.createElement('div'); sizer.className = 'tree-sizer';
   sizer.append(canvas);
   host.replaceChildren(sizer);
   TREE_SIZE = { w: gw, h: gh };
   applyZoom();
-}
-
-/* Reserva, se a biblioteca da árvore não carregar: uma linha por geração. */
-function renderRows(host) {
-  const genOf = new Map(G.P.starters.map(c => [c.id, 0]));
-  G.crosses.forEach(cr => { const g = Math.max(genOf.get(cr.a), genOf.get(cr.b)) + 1; cr.kids.forEach(id => genOf.set(id, g)); });
-  const max = Math.max(...genOf.values());
-  const box = document.createElement('div'); box.className = 'gens';
-  for (let g = 0; g <= max; g++) {
-    const row = document.createElement('div'); row.className = 'gen-row';
-    G.pop.filter(c => genOf.get(c.id) === g).forEach(c => row.append(makeCard(c)));
-    box.append(row);
-  }
-  host.replaceChildren(box);
 }
 
 function renderNoteBar() {

@@ -1416,8 +1416,12 @@ function makeCard(c) {
     b.append(m);
   }
   if (G.reveal) { const g = document.createElement('span'); g.className = 'geno'; g.textContent = trueGeno(V, c).join(' '); b.append(g); }
-  const nextE = G.status === 'playing' && !G.dead.has(c.id) && !dph ? G.P.Es[G.fired] : null;
-  if (nextE && killedBy(nextE.E, c.p)) { const r = document.createElement('span'); r.className = 'risk'; r.setAttribute('aria-hidden', 'true'); r.append(threatMark(nextE.E.id, 18)); b.append(r); }
+  /* a marca de quem vai morrer: durante a cena, a vítima continua com o bicho da ameaça atual até cair;
+     a marca da ameaça seguinte só aparece depois que a cena termina */
+  const dying = dph && dph !== 'done' && dph !== 'dead';
+  const nextE = G.status === 'playing' && !G.dead.has(c.id) && !G.dying ? G.P.Es[G.fired] : null;
+  const markE = dying ? G.curE : (nextE && killedBy(nextE.E, c.p) ? nextE.E : null);
+  if (markE) { const r = document.createElement('span'); r.className = 'risk'; r.setAttribute('aria-hidden', 'true'); r.append(threatMark(markE.id, 18)); b.append(r); }
   if (dead) {
     const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = tr(gone ? 'gone_wind' : 'dead'); b.append(tg);
     if (!gone) {
@@ -1585,7 +1589,7 @@ function scheduleDeath() {
   const me = G, E = G.curE, [kind] = ATTACK[E.id] || ['ceu'];
   const live = () => G === me;
   const setSt = (id, st) => { if (!live()) return; G.deathState.set(id, st); refreshCard(id); };
-  const finish = () => { if (!live()) return; if (deathPhase() === 'done') { G.dying = null; renderBar(); renderToast(); } };
+  const finish = () => { if (!live()) return; if (deathPhase() === 'done') { G.dying = null; renderBar(); renderToast(); renderTree(); } };
   /* susto, murchar e morrer; a ventania que leva embora troca o murchar pelo voo */
   const hitOne = id => {
     setSt(id, 'surprise');

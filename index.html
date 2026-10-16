@@ -298,9 +298,9 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 .pips.threats { padding-top: 22px; }
 /* o quadradinho do cruzamento em que a ameaça chega: borda vermelha e a ameaça em cima, mesmo depois de usado */
 .pip { position: relative; }
-/* a ameaça chega entre dois cruzamentos: tracinho vermelho no vão, com o bicho em cima */
-.pip .m { position: absolute; bottom: 15px; left: 100%; margin-left: 2px; transform: translateX(-50%); }
-.pip .tick { position: absolute; left: 100%; top: -3px; width: 2px; height: 20px; margin-left: 1px; background: var(--danger); border-radius: 1px; }
+/* a ameaça chega entre dois cruzamentos: uma parede vermelha no vão, com o bicho em cima */
+.pips .wall { width: 3px; height: 14px; background: var(--danger); border-radius: 2px; position: relative; flex: none; }
+.pips .wall .m { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); line-height: 0; }
 .bar-actions { flex: 1 1 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .pip { width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 3px; }
 .pip.used { background: var(--ink); }
@@ -1311,9 +1311,11 @@ function render() {
   $('pips').replaceChildren(...Array.from({ length: V.max }, (_, i) => {
     const e = document.createElement('span'); e.className = 'pip' + (i < G.crosses.length ? ' used' : '');
     const ev = G.P.Es.find(x => x.at === i + 1);
-    if (ev) { const m = document.createElement('span'); m.className = 'm'; m.setAttribute('aria-hidden', 'true'); m.append(threatMark(ev.E.id)); e.append(m); const t = document.createElement('span'); t.className = 'tick'; e.append(t); }
-    return e;
-  }));
+    if (!ev) return [e];
+    const w = document.createElement('span'); w.className = 'wall'; w.setAttribute('aria-hidden', 'true');
+    const m = document.createElement('span'); m.className = 'm'; m.append(threatMark(ev.E.id)); w.append(m);
+    return [e, w];
+  }).flat());
   renderBar();
   renderToast();
   renderEnd();

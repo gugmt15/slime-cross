@@ -355,6 +355,8 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 /* base 0: o título nunca empurra o idioma e o ? pra linha de baixo (em japonês ele é mais largo) */
 .gh-mid { flex: 1 1 0; min-width: 0; }
 .gh-title { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; line-height: 1.1; }
+/* a fonte de pixel não tem letra japonesa e a substituta é mais larga: no celular o título diminui pra caber numa linha */
+:lang(ja) .gh-title { font-size: min(1.3rem, 4.3vw); white-space: nowrap; }
 .tut { display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }
 .tut-text { font-size: 1.05rem; margin: 0; max-width: 60ch; }
 .tut-step-n { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }

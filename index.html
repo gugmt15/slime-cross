@@ -1217,6 +1217,7 @@ function doCross(aId, bId, silent) {
     else if (!pairsLeft()) { G.status = 'lost'; G.reason = 'r_nopair'; }
   }
   if (!silent) save();
+  if (G.mode === 'daily' && !silent && !G.replay && !G.autoplay && G.crosses.length === 1) track('start');
   if (G.mode === 'daily' && G.status !== 'playing') recordDaily();
 }
 
@@ -1226,6 +1227,24 @@ function recordDaily() {
   if (st.days[G.seedStr]) return;
   st.days[G.seedStr] = { won: G.status === 'won', n: G.crosses.length };
   store(STATS, st);
+  track('end');
+}
+/* Estatística anônima do desafio do dia (functions/api/stats.js): o começo e o fim de cada partida, sem identificar ninguém.
+   Só no site e nos endereços de teste do Cloudflare; os de teste vão marcados e ficam fora do resumo. */
+const TRACK_ON = /(^|\.)slimecross\.com$|(^|\.)slime-cross\.pages\.dev$/.test(location.hostname);
+const TRACK_TEST = !IS_LIVE && location.hostname !== 'slime-cross.pages.dev';
+function track(ev, reason) {
+  if (!TRACK_ON) return;
+  try {
+    const before = Object.keys((load(STATS) || { days: {} }).days).filter(k => k !== G.seedStr);
+    const S = statsSummary();
+    const body = {
+      ev, date: G.seedStr, day: G.info.n, hard: G.V === HARD, test: TRACK_TEST || !!TEST_DAY,
+      won: G.status === 'won', reason: reason || G.reason || '', n: G.crosses.length, par: G.P.par,
+      path: G.crosses.map(c => lab(c.a) + '×' + lab(c.b)).join(' '), played: before.length, streak: S.current, lang: LANG,
+    };
+    fetch('/api/stats', { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
+  } catch (e) {}
 }
 function statsSummary() {
   const st = load(STATS) || { days: {} };
@@ -1850,7 +1869,7 @@ $('btn-cross').addEventListener('click', () => {
 function showAnswer() {
   if (G.mode === 'daily') {
     const st = load(STATS) || { days: {} };
-    if (!st.days[G.seedStr]) { st.days[G.seedStr] = { won: false, n: G.crosses.length }; store(STATS, st); }
+    if (!st.days[G.seedStr]) { st.days[G.seedStr] = { won: false, n: G.crosses.length }; store(STATS, st); track('end', 'gaveup'); }
   }
   newGame(G.mode, G.V, G.seedStr, G.info, null, G.mods, G.listed);
   G.gaveup = true;

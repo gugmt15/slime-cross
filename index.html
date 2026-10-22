@@ -2218,7 +2218,8 @@ function renderArch() {
    (o capítulo de 1 gene que existiu em 2026-10-23 era sorte de par, e saiu). */
 const PHASE = (max, extra) => Object.assign({ max }, extra || {});
 const CAMP = [
-  { id: 1, V: VARIANTS.dois, mods: {}, sample: { cor: 'azul', chifre: false, olhos: 2 }, phases: [PHASE(8, { minPar: 2, maxPar: 2 }), PHASE(8), PHASE(5)] },
+  /* com dois genes só existe um desafio de mínimo 3 (alvo azul sem chifre): ele é a prova, e as duas fases antes são de mínimo 2 */
+  { id: 1, V: VARIANTS.dois, mods: {}, sample: { cor: 'azul', chifre: false, olhos: 2 }, phases: [PHASE(8, { minPar: 2, maxPar: 2 }), PHASE(8, { minPar: 2, maxPar: 2 }), PHASE(5)] },
   { id: 2, V: VARIANTS.classico, mods: {}, sample: { cor: 'vermelho', chifre: true, olhos: 1 }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
   { id: 3, V: VARIANTS.classico, mods: { aging: true }, sample: { cor: 'azul', chifre: true, olhos: 1 }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
   { id: 4, V: VARIANTS.classico, mods: { threat: true, ev: 'olhos' }, bicho: 'olhos', phases: [PHASE(8), PHASE(8), PHASE(5)] },
@@ -2249,11 +2250,31 @@ function starStr(n) { return '★'.repeat(n) + '☆'.repeat(3 - n); }
 function starNodes(n) {
   return [0, 1, 2].map(i => { const sp = document.createElement('span'); sp.textContent = '★'; if (i >= n) sp.className = 'off'; return sp; });
 }
+/* As fases de um capítulo têm que parecer diferentes pra quem joga: alvo diferente e iniciais diferentes na aparência
+   (com dois genes, sementes diferentes davam o mesmo desafio com outros genes por dentro). A semente ganha um sufixo
+   até a fase não repetir nenhuma anterior do capítulo. */
+const campSeeds = new Map();
+function campSig(V, P) { return [descrText(V, P.target), P.starters.map(c => descrText(V, c.p)).sort().join('|')]; }
+function campSeed(ch, ph) {
+  const k = ch + '-' + ph;
+  if (campSeeds.has(k)) return campSeeds.get(k);
+  const L = CAMP[ch - 1], mods = Object.assign({}, L.mods, L.phases[ph - 1]);
+  const prev = [];
+  for (let q = 1; q < ph; q++) { const Pq = makePuzzle(L.V, campSeed(ch, q), Object.assign({}, L.mods, L.phases[q - 1])); if (Pq) prev.push(campSig(L.V, Pq)); }
+  let seed = 'camp:' + k;
+  for (let n = 1; n < 50; n++) {
+    const P = makePuzzle(L.V, seed, mods);
+    if (P) { const [t, st] = campSig(L.V, P); if (!prev.some(([pt, pst]) => pt === t || pst === st)) break; }
+    seed = 'camp:' + k + '+' + n;
+  }
+  campSeeds.set(k, seed);
+  return seed;
+}
 function startCamp(ch, ph) {
   const L = CAMP[ch - 1], P = L.phases[ph - 1];
   const V = Object.assign({}, L.V, { max: P.max });
   const mods = Object.assign({}, L.mods, P);
-  newGame('camp', V, 'camp:' + ch + '-' + ph, { ch, ph }, null, mods, null);
+  newGame('camp', V, campSeed(ch, ph), { ch, ph }, null, mods, null);
   show('game');
   setTimeout(() => campIntro(L), 50);
 }

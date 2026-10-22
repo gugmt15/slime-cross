@@ -2425,6 +2425,58 @@ function renderCamp() {
   }));
 }
 
+/* Só nos endereços de teste, com ?cenas: comparação de quatro jeitos de desenhar o cartão de cada capítulo */
+function renderCenas() {
+  const S = (cor, x) => ({ s: Object.assign({ cor, chifre: true, olhos: 2 }, x || {}) });
+  const B = b => ({ b });
+  const big = {
+    0: S('azul', { chifre: false, happy: true }), 1: S('vermelho'), 2: S('vermelho', { olhos: 1, surpreso: true }), 3: Object.assign(S('vermelho'), { tag: '?' }),
+    4: Object.assign(S('azul', { olhos: 1, sad: true }), { tag: '2×' }), 5: B('olhos'), 6: B('chifre'), 7: S('roxo', { happy: true }), 8: S('transparente'),
+    9: S('roxo', { chifre: false, olhos: 1 }), 10: S('vermelho', { asas: true }), 11: B('asas'), 12: S('roxo', { olhos: 1, asas: true, happy: true }),
+  };
+  const cross = {
+    0: [S('vermelho', { chifre: false }), '×', S('vermelho', { chifre: false }), '→', S('azul', { chifre: false, happy: true })],
+    1: [S('vermelho', { chifre: false }), '×', S('azul'), '→', S('vermelho', { happy: true })],
+    2: [S('vermelho'), '×', S('vermelho'), '→', S('vermelho', { olhos: 1, surpreso: true })],
+    3: [S('vermelho'), '×', S('vermelho'), '→', S('vermelho', { chifre: false, surpreso: true })],
+    4: [S('azul', { olhos: 1 }), '→', S('azul', { olhos: 1 }), '→', S('azul', { olhos: 1, sad: true })],
+    5: [B('olhos'), '→', S('vermelho', { olhos: 1, morto: true })],
+    6: [B('chifre'), '→', S('vermelho', { chifre: false, morto: true })],
+    7: [S('vermelho'), '×', S('azul'), '→', S('roxo', { happy: true })],
+    8: [S('transparente'), '×', S('azul'), '→', S('vermelho', { happy: true })],
+    9: [S('roxo'), '×', S('transparente'), '→', S('roxo', { olhos: 1, happy: true })],
+    10: [B('asas'), '→', S('vermelho', { asas: true, morto: true })],
+    11: [B('olhos'), B('chifre'), B('azul'), B('asas')],
+    12: [S('roxo'), '×', S('transparente'), '→', S('roxo', { asas: true, happy: true })],
+  };
+  const tint = ['#2c4a7a', '#7a3a3a', '#6b5a24', '#3e3e5c', '#3c5a5a', '#5a3a24', '#6b4a1e', '#55306e', '#2f5a63', '#4a3a66', '#3a5a3a', '#333344', '#5c2f5c'];
+  const piece = (x, h, i, id) => {
+    if (typeof x === 'string') { const t = document.createElement('span'); t.textContent = x; t.style.cssText = 'color:var(--muted);font-size:0.75rem;font-family:var(--font-display)'; return t; }
+    const it = document.createElement('span'); it.className = 'it';
+    const c = x.b ? bichoCv(x.b) : slimeCv(x.s);
+    if (!x.b) { c.className = 'sprite'; if (!x.s.morto) ownBob(c, 'cena:' + id + ':' + i + ':' + h); else c.style.animation = 'none'; }
+    c.style.height = h + 'px'; it.append(c);
+    if (x.tag) { const t = document.createElement('i'); t.textContent = x.tag; it.append(t); }
+    return it;
+  };
+  const box = (items, h, extra) => { const a = document.createElement('div'); a.className = 'ch-art'; a.style.cssText = 'grid-row:auto;border:1px dashed var(--line);border-radius:8px;position:relative;overflow:hidden;' + (extra || ''); items.forEach((x, i) => a.append(piece(x, h, i, items.length))); return a; };
+  const rows = CAMP.slice().sort((a, b) => a.id - b.id).map(L => {
+    const r = document.createElement('div'); r.style.cssText = 'display:grid;grid-template-columns:76px 76px 116px 76px;gap:4px;align-items:center';
+    const t = document.createElement('b'); t.textContent = L.id + '. ' + tr('ch_' + L.id); t.style.cssText = 'grid-column:1/-1;font-family:var(--font-display);font-weight:400;margin-top:10px';
+    const A = box(L.art || [], 0); A.replaceChildren(); (L.art || []).forEach((x, i) => A.append(piece(x, x.h, i, 'a' + L.id)));
+    const Bx = box([big[L.id]], 54);
+    const Cx = box(cross[L.id], L.id === 11 ? 26 : 24, 'gap:1px 3px;width:116px;flex-wrap:nowrap;');
+    const D = box([big[L.id]], 48, 'background:' + tint[L.id] + ';border:2px solid var(--ink);');
+    const num = document.createElement('span'); num.textContent = L.id; num.style.cssText = 'position:absolute;right:4px;bottom:-6px;font-family:var(--font-display);font-size:2rem;color:rgba(255,255,255,0.18);pointer-events:none'; D.append(num);
+    r.append(t, A, Bx, Cx, D);
+    return r;
+  });
+  const head = document.createElement('div'); head.style.cssText = 'display:grid;grid-template-columns:76px 76px 116px 76px;gap:4px;font-weight:700;font-size:0.85rem';
+  ['A. Cena', 'B. Um só', 'C. Cruzamento', 'D. Capa'].forEach(x => { const h = document.createElement('span'); h.textContent = x; head.append(h); });
+  $('camp-total').textContent = 'Comparação dos cartões (só no teste)';
+  $('camp-list').replaceChildren(head, ...rows);
+}
+
 /* Outros modos: um cartão por versão, com um slime de amostra; os modos especiais são chaves que valem pra versão escolhida depois */
 const MODE_SAMPLE = {
   dois: { cor: 'vermelho', chifre: true, olhos: 2 },
@@ -2806,6 +2858,7 @@ $('help').addEventListener('click', e => {
 });
 
 function boot(data) {
+  if (!IS_LIVE && /[?&]cenas/.test(location.search)) { setTimeout(() => { show('camp'); renderCenas(); }, 0); }
   initLang();
   fillVariantSelect();
   EASY = !!load('slime-easy');

@@ -1771,12 +1771,16 @@ function renderTree() {
     card.style.left = p.x + 'px'; card.style.top = p.y + 'px';
     canvas.append(card);
   });
+  /* como a árvore só cresce pra baixo, a largura é fixa: em tela estreita demais ela já começa no zoom que cabe.
+     A largura é medida antes de trocar a árvore: medir depois força o navegador a montar a página com a árvore nova
+     ainda sem altura, e a rolagem pulava pro topo a cada toque (2026-10-23). */
+  if (G.zoom === undefined) { const hw = host.clientWidth; if (hw && gw > hw) G.zoom = Math.max(0.3, (hw - 2) / gw); }
   const sizer = document.createElement('div'); sizer.className = 'tree-sizer';
   sizer.append(canvas);
-  host.replaceChildren(sizer);
   TREE_SIZE = { w: gw, h: gh };
-  /* como a árvore só cresce pra baixo, a largura é fixa: em tela estreita demais ela já começa no zoom que cabe */
-  if (G.zoom === undefined && host.clientWidth && gw > host.clientWidth) G.zoom = Math.max(0.3, (host.clientWidth - 2) / gw);
+  const z = G.zoom || 1;
+  sizer.style.width = Math.ceil(gw * z) + 'px'; sizer.style.height = Math.ceil(gh * z) + 'px';
+  host.replaceChildren(sizer);
   applyZoom();
 }
 

@@ -2198,7 +2198,7 @@ function lessonRow(parts) {
   return r;
 }
 function maybeLesson(V) {
-  const todo = [V.inc && !load('slime-lesson-inc') ? 'inc' : null, V.trans && !load('slime-lesson-trans') ? 'trans' : null].filter(Boolean);
+  const todo = [V.inc && !load('slime-licao-inc') ? 'inc' : null, V.trans && !load('slime-licao-trans') ? 'trans' : null].filter(Boolean);
   if (!todo.length) return;
   const sl = (cor, extra) => Object.assign({ cor, chifre: true, olhos: 2 }, extra || {});
   const body = [];
@@ -2208,13 +2208,15 @@ function maybeLesson(V) {
     const p2 = document.createElement('p'); p2.textContent = tr('les_' + k + '_2');
     if (k === 'inc') body.push(lessonRow([sl('vermelho'), '×', sl('azul'), '→', sl('roxo')]), p1, lessonRow([sl('roxo'), '×', sl('roxo'), '→', sl('vermelho'), sl('roxo'), sl('azul')]), p2);
     else body.push(p1, lessonRow([sl('transparente'), '×', sl('azul'), '→', sl(V.inc ? 'roxo' : 'vermelho')]), p2);
-    store('slime-lesson-' + k, true);
   });
+  lessonTodo = todo;
   $('lesson-title').textContent = todo.length > 1 ? vname(V) : tr('les_' + todo[0] + '_t');
   $('lesson-body').replaceChildren(...body);
   const dl = $('lesson'); if (dl.showModal) dl.showModal(); else dl.setAttribute('open', '');
 }
-function closeLesson() { const dl = $('lesson'); if (dl.close) dl.close(); else dl.removeAttribute('open'); }
+/* só conta como vista quando a pessoa fecha a janela */
+let lessonTodo = [];
+function closeLesson() { lessonTodo.forEach(k => store('slime-licao-' + k, true)); lessonTodo = []; const dl = $('lesson'); if (dl.close) dl.close(); else dl.removeAttribute('open'); }
 $('lesson-ok').addEventListener('click', closeLesson);
 $('lesson-x').addEventListener('click', closeLesson);
 

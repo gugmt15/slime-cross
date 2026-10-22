@@ -2226,7 +2226,7 @@ const PHASE = (max, extra) => Object.assign({ max }, extra || {});
 const CAMP = [
   { id: 0, V: ONE, mods: { hard: true, carriers: true, minPar: 1, maxPar: 1 }, sample: { cor: 'azul', chifre: false, olhos: 2 }, phases: [PHASE(8)] },
   /* com dois genes só existe um desafio de mínimo 3 (alvo azul sem chifre): ele é a prova, e as duas fases antes são de mínimo 2 */
-  { id: 1, V: VARIANTS.dois, mods: {}, sample: { cor: 'azul', chifre: false, olhos: 2 }, phases: [PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'azul', chifre: true } }), PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'vermelho', chifre: false } }), PHASE(5)] },
+  { id: 1, V: VARIANTS.dois, mods: {}, sample: { cor: 'azul', chifre: true, olhos: 2 }, phases: [PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'azul', chifre: true } }), PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'vermelho', chifre: false } }), PHASE(5)] },
   { id: 2, V: VARIANTS.classico, mods: {}, sample: { cor: 'vermelho', chifre: true, olhos: 1 }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
   { id: 3, V: VARIANTS.classico, mods: { aging: true }, sample: { cor: 'azul', chifre: true, olhos: 1 }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
   { id: 4, V: VARIANTS.classico, mods: { threat: true, ev: 'olhos' }, bicho: 'olhos', phases: [PHASE(8), PHASE(8), PHASE(5)] },

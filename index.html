@@ -520,6 +520,10 @@ footer { font-size: 0.8rem; color: var(--muted); padding-bottom: 16px; max-width
 .ch-art { grid-row: 1 / 3; width: 76px; height: 62px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; align-content: center; gap: 2px 4px; }
 .ch-art .it { position: relative; display: flex; }
 .ch-art canvas { width: auto; image-rendering: pixelated; }
+.ch-art.cover { border: 2px solid var(--ink); border-radius: 10px; position: relative; overflow: hidden; }
+.ch-art.cover .num { position: absolute; right: 4px; bottom: -8px; font-family: var(--font-display); font-size: 2rem; color: rgba(255, 255, 255, 0.2); pointer-events: none; }
+.ch-art.cover.grid { display: grid; grid-template-columns: 1fr 1fr; justify-items: center; align-items: center; padding: 4px 6px; }
+.ch-art.cover.scatter .it { position: absolute; }
 .ch-art .it i { position: absolute; right: -6px; top: -4px; font-style: normal; font-size: 0.75rem; font-weight: 700; background: var(--ink); color: var(--surface); border-radius: 4px; padding: 0 4px; }
 .ch-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .ch-head b { font-family: var(--font-display); font-weight: 400; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2250,20 +2254,20 @@ function renderArch() {
    (o capítulo de 1 gene que existiu em 2026-10-23 era sorte de par, e saiu). */
 const PHASE = (max, extra) => Object.assign({ max }, extra || {});
 const CAMP = [
-  { id: 0, V: ONE, mods: { hard: true, carriers: true, minPar: 1, maxPar: 1 }, stars: 1, sample: { cor: 'azul', chifre: false, olhos: 2 }, art: [{ s: { cor: 'vermelho', chifre: false, olhos: 2 }, h: 40 }, { s: { cor: 'azul', chifre: false, olhos: 2, happy: true }, h: 28 }], phases: [PHASE(8)] },
+  { id: 0, V: ONE, mods: { hard: true, carriers: true, minPar: 1, maxPar: 1 }, stars: 1, sample: { cor: 'azul', chifre: false, olhos: 2 }, cover: { tint: '#2c4a7a', items: [{ s: { cor: 'azul', chifre: false, olhos: 2, happy: true }, h: 48 }] }, phases: [PHASE(8)] },
   /* com dois genes só existe um desafio de mínimo 3 (alvo azul sem chifre): ele é a prova, e as duas fases antes são de mínimo 2 */
-  { id: 1, V: VARIANTS.dois, mods: {}, sample: { cor: 'azul', chifre: true, olhos: 2 }, art: [{ s: { cor: 'vermelho', chifre: false, olhos: 2 }, h: 34 }, { s: { cor: 'azul', chifre: true, olhos: 2 }, h: 34 }], phases: [PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'azul', chifre: true } }), PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'vermelho', chifre: false } }), PHASE(5)] },
-  { id: 2, V: VARIANTS.classico, mods: {}, sample: { cor: 'vermelho', chifre: true, olhos: 1 }, art: [{ s: { cor: 'vermelho', chifre: true, olhos: 1, surpreso: true }, h: 54 }], phases: [PHASE(8), PHASE(8), PHASE(5)] },
-  { id: 3, V: VARIANTS.classico, mods: { hard: true, twoCarriers: true }, sample: { cor: 'vermelho', chifre: true, olhos: 2 }, art: [{ s: { cor: 'vermelho', chifre: true, olhos: 2 }, h: 46, tag: '?' }], phases: [PHASE(8), PHASE(8), PHASE(5)] },
-  { id: 4, V: VARIANTS.classico, mods: { aging: true }, sample: { cor: 'azul', chifre: true, olhos: 1 }, art: [{ s: { cor: 'azul', chifre: true, olhos: 1, sad: true }, h: 46, tag: '2×' }], phases: [PHASE(8), PHASE(8), PHASE(5)] },
-  { id: 5, V: VARIANTS.classico, mods: { threat: true, ev: 'olhos' }, bicho: 'olhos', art: [{ b: 'olhos', h: 40 }, { s: { cor: 'vermelho', chifre: true, olhos: 1, morto: true }, h: 24 }], phases: [PHASE(8), PHASE(8), PHASE(5)] },
-  { id: 6, V: VARIANTS.classico, mods: { threat: true }, bicho: 'chifre', art: [{ b: 'chifre', h: 32 }, { b: 'azul', h: 32 }], phases: [PHASE(8, { ev: 'chifre' }), PHASE(8, { ev: 'azul' }), PHASE(5)] },
-  { id: 7, V: VARIANTS.roxo, mods: {}, lesson: ['inc'], sample: { cor: 'roxo', chifre: true, olhos: 2 }, art: [{ s: { cor: 'roxo', chifre: true, olhos: 2, happy: true }, h: 54 }], phases: [PHASE(8), PHASE(8), PHASE(5)] },
-  { id: 8, V: VARIANTS.transparente, mods: {}, lesson: ['trans'], sample: { cor: 'transparente', chifre: true, olhos: 2 }, art: [{ s: { cor: 'transparente', chifre: true, olhos: 2 }, h: 46, tag: '?' }], phases: [PHASE(8), PHASE(8), PHASE(5)] },
-  { id: 9, V: VARIANTS.mistura, mods: {}, sample: { cor: 'roxo', chifre: false, olhos: 1 }, art: [{ s: { cor: 'roxo', chifre: false, olhos: 2 }, h: 34 }, { s: { cor: 'transparente', chifre: true, olhos: 1 }, h: 34 }], phases: [PHASE(8), PHASE(8), PHASE(5)] },
-  { id: 10, V: VARIANTS.asasdif, mods: {}, sample: { cor: 'vermelho', chifre: true, olhos: 2, asas: true }, art: [{ s: { cor: 'vermelho', chifre: true, olhos: 2, asas: true }, h: 30 }, { b: 'asas', h: 26 }], phases: [PHASE(8), PHASE(8), PHASE(6, { threat: true, ev: 'asas', intro: 'vento' })] },
-  { id: 12, secret: true, V: SECRET, mods: { threat: true, two: true, needAll: true }, sample: { cor: 'transparente', chifre: true, olhos: 1, asas: true }, art: [{ s: { cor: 'roxo', chifre: true, olhos: 1, asas: true, happy: true }, h: 30 }, { s: { cor: 'transparente', chifre: false, olhos: 2 }, h: 28 }], phases: [PHASE(8), PHASE(8), PHASE(7)] },
-  { id: 11, V: VARIANTS.asasdif, mods: { threat: true, two: true }, sample: { cor: 'azul', chifre: false, olhos: 1, asas: true }, art: [{ b: 'olhos', h: 26 }, { b: 'chifre', h: 26 }, { b: 'azul', h: 26 }, { b: 'asas', h: 26 }], phases: [PHASE(8), PHASE(8), PHASE(6)] },
+  { id: 1, V: VARIANTS.dois, mods: {}, sample: { cor: 'azul', chifre: true, olhos: 2 }, cover: { tint: '#7a3a3a', items: [{ s: { cor: 'vermelho', chifre: true, olhos: 2 }, h: 48 }] }, phases: [PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'azul', chifre: true } }), PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'vermelho', chifre: false } }), PHASE(5)] },
+  { id: 2, V: VARIANTS.classico, mods: {}, sample: { cor: 'vermelho', chifre: true, olhos: 1 }, cover: { tint: '#6b5a24', items: [{ s: { cor: 'vermelho', chifre: true, olhos: 1, surpreso: true }, h: 48 }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
+  { id: 3, V: VARIANTS.classico, mods: { hard: true, twoCarriers: true }, sample: { cor: 'vermelho', chifre: true, olhos: 2 }, cover: { tint: '#3e3e5c', items: [{ s: { cor: 'vermelho', chifre: true, olhos: 2 }, h: 46, tag: '?' }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
+  { id: 4, V: VARIANTS.classico, mods: { aging: true }, sample: { cor: 'azul', chifre: true, olhos: 1 }, cover: { tint: '#3c5a5a', items: [{ s: { cor: 'azul', chifre: true, olhos: 1 }, h: 46, tag: '2×' }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
+  { id: 5, V: VARIANTS.classico, mods: { threat: true, ev: 'olhos' }, bicho: 'olhos', cover: { tint: '#5a3a24', items: [{ b: 'olhos', h: 48 }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
+  { id: 6, V: VARIANTS.classico, mods: { threat: true }, bicho: 'chifre', cover: { tint: '#6b4a1e', items: [{ b: 'chifre', h: 32 }, { b: 'azul', h: 32 }] }, phases: [PHASE(8, { ev: 'chifre' }), PHASE(8, { ev: 'azul' }), PHASE(5)] },
+  { id: 7, V: VARIANTS.roxo, mods: {}, lesson: ['inc'], sample: { cor: 'roxo', chifre: true, olhos: 2 }, cover: { tint: '#55306e', items: [{ s: { cor: 'roxo', chifre: true, olhos: 2, happy: true }, h: 48 }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
+  { id: 8, V: VARIANTS.transparente, mods: {}, lesson: ['trans'], sample: { cor: 'transparente', chifre: true, olhos: 2 }, cover: { tint: '#2f5a63', items: [{ s: { cor: 'transparente', chifre: true, olhos: 2 }, h: 48 }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
+  { id: 9, V: VARIANTS.mistura, mods: {}, sample: { cor: 'roxo', chifre: false, olhos: 1 }, cover: { tint: 'rgba(200, 236, 244, 0.45)', items: [{ s: { cor: 'roxo', chifre: false, olhos: 1 }, h: 48 }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
+  { id: 10, V: VARIANTS.asasdif, mods: {}, sample: { cor: 'vermelho', chifre: true, olhos: 2, asas: true }, cover: { tint: '#3a5a3a', items: [{ s: { cor: 'vermelho', chifre: true, olhos: 2, asas: true }, h: 40 }] }, phases: [PHASE(8), PHASE(8), PHASE(6, { threat: true, ev: 'asas', intro: 'vento' })] },
+  { id: 12, secret: true, V: SECRET, mods: { threat: true, two: true, needAll: true }, sample: { cor: 'transparente', chifre: true, olhos: 1, asas: true }, cover: { tint: '#5c2f5c', scatter: true, items: [{ s: { cor: 'roxo', chifre: true, olhos: 1, asas: true, happy: true }, h: 30, x: 14, y: 17, r: -8 }, { s: { cor: 'transparente', chifre: false, olhos: 2, surpreso: true }, h: 20, x: 46, y: 36, r: 12 }, { b: 'olhos', h: 18, x: 2, y: 1, r: -18 }, { b: 'chifre', h: 17, x: 52, y: 3, r: 14 }, { b: 'azul', h: 18, x: 0, y: 42, r: 20 }, { b: 'asas', h: 16, x: 50, y: 22, r: -10 }] }, phases: [PHASE(8), PHASE(8), PHASE(7)] },
+  { id: 11, V: VARIANTS.asasdif, mods: { threat: true, two: true }, sample: { cor: 'azul', chifre: false, olhos: 1, asas: true }, cover: { tint: '#333344', grid: true, items: [{ b: 'olhos', h: 24 }, { b: 'chifre', h: 24 }, { b: 'azul', h: 24 }, { b: 'asas', h: 24 }] }, phases: [PHASE(8), PHASE(8), PHASE(6)] },
 ];
 const CAMP_KEY = 'slime-camp';
 const campCh = id => CAMP.find(L => L.id === id);
@@ -2393,9 +2397,14 @@ function renderCamp() {
     const open = campUnlocked(L.id);
     const card = document.createElement('div'); card.className = 'ch-card' + (open ? '' : ' locked');
     /* a cena do capítulo: slimes e ameaças pequenos que contam o que o capítulo ensina */
-    const cv = document.createElement('div'); cv.className = 'ch-art';
-    (L.art || [{ s: L.sample, h: 52 }]).forEach((x, i) => {
+    /* capa do capítulo: fundo de cor própria, número grande atrás, e o slime ou as ameaças que resumem o capítulo */
+    const C0 = L.cover || { tint: 'transparent', items: [{ s: L.sample, h: 48 }] };
+    const cv = document.createElement('div'); cv.className = 'ch-art cover' + (C0.grid ? ' grid' : '') + (C0.scatter ? ' scatter' : '');
+    cv.style.background = C0.tint;
+    const num = document.createElement('span'); num.className = 'num'; num.textContent = L.id; cv.append(num);
+    C0.items.forEach((x, i) => {
       const it = document.createElement('span'); it.className = 'it';
+      if (C0.scatter) { it.style.left = x.x + 'px'; it.style.top = x.y + 'px'; it.style.transform = 'rotate(' + x.r + 'deg)'; }
       const c = x.b ? bichoCv(x.b) : slimeCv(x.s);
       if (!x.b) { c.className = 'sprite'; if (!x.s.morto) ownBob(c, 'camp:' + L.id + ':' + i); else c.style.animation = 'none'; }
       c.style.height = x.h + 'px';

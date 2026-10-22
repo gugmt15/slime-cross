@@ -1502,6 +1502,7 @@ function render() {
   $('help-mode').hidden = G.mode !== 'daily';
   $('btn-reset').hidden = G.mode === 'daily' && IS_LIVE;
   $('btn-hard').hidden = G.mode !== 'daily';
+  $('btn-giveup').hidden = G.mode === 'camp'; /* na campanha não se vê a resposta: a fase se repete até as três estrelas */
   $('modehelp').hidden = G.mode !== 'daily';
   $('btn-hard').setAttribute('aria-pressed', G.V === HARD ? 'true' : 'false');
   $('btn-hard').classList.toggle('locked', G.crosses.length > 0 || G.status !== 'playing' || !!G.replay);
@@ -1994,7 +1995,7 @@ function renderEnd() {
     bk.textContent = tr('back_mine');
     bk.addEventListener('click', backToMine);
     actions.prepend(bk);
-  } else {
+  } else if (G.mode !== 'camp') {
     actions.append(rv);
     if ((G.status === 'won' && G.crosses.length > G.P.par) || (G.status === 'lost' && !G.gaveup)) {
       const sp = document.createElement('button'); sp.type = 'button'; sp.className = 'btn';
@@ -2289,7 +2290,7 @@ function startCamp(ch, ph) {
 }
 /* a abertura do capítulo, na primeira vez: desenho e duas frases, como as lições do roxo e do transparente */
 function campIntro(L) {
-  const flag = 'slime-camp-intro-' + L.id;
+  const flag = 'slime-camp-intro2-' + L.id; /* intro2: as aberturas voltaram a aparecer em 2026-10-23, depois da reordenação dos capítulos */
   if (load(flag)) return;
   const sl = (cor, extra, ...g) => ({ p: Object.assign({ cor, chifre: true, olhos: 2 }, extra || {}), g });
   const body = [];

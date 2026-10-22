@@ -1704,8 +1704,9 @@ function setZoom(z) { if (!G) return; G.zoom = Math.max(0.3, Math.min(1.6, z)); 
 function fitZoom() { const w = $('tree').clientWidth - 4; return TREE_SIZE.w ? Math.min(1, w / TREE_SIZE.w) : 1; }
 
 /* Árvore: cada cruzamento é um nó com o número dele; os dois pais descem até ele, e dele saem os 4 filhotes.
-   Ninguém muda de lugar depois que aparece: A, B e C ficam fixos no topo, cada geração tem a sua linha, e cada
-   ninhada nova entra embaixo dos pais, no primeiro espaço livre da linha dela, sem empurrar as que já estão lá. */
+   Ninguém muda de lugar depois que aparece: A, B e C ficam fixos no topo, e cada cruzamento ganha a própria linha,
+   embaixo da anterior e centralizada, como os quadradinhos do resultado. A árvore só cresce pra baixo, nunca pro lado
+   (até 2026-10-23 cada linha era uma geração, e ninhadas da mesma geração ficavam lado a lado). */
 function renderTree() {
   const host = $('tree');
   const relevant = new Set(G.sel);
@@ -1713,23 +1714,17 @@ function renderTree() {
   const CW = 80, CH = cardH(), GAP = 10, SLOT = CW + GAP, BAND = 56, XH = 22;
   const GW = 4 * SLOT - GAP; /* largura de uma ninhada */
   const rowTop = g => 12 + g * (CH + BAND); /* folga em cima pra marca da ameaça no canto do cartão não cortar */
-  const pos = new Map(), gen = new Map(), rows = [];
-  const occupy = (g, l, r) => { (rows[g] = rows[g] || []).push([l, r]); };
+  const pos = new Map();
   /* iniciais no meio da área da árvore; a área nunca encolhe, então crescer a árvore não arrasta ninguém */
   if (!G.treeBase && host.clientWidth) G.treeBase = Math.max(8 + GW, host.clientWidth - 4); /* medida uma vez por partida */
   const base = G.treeBase || 8 + GW;
   const off = Math.round(base / 2 - (3 * SLOT - GAP) / 2);
-  G.P.starters.forEach((c, k) => { pos.set(c.id, { x: off + k * SLOT, y: rowTop(0) }); gen.set(c.id, 0); });
-  occupy(0, off, off + 3 * SLOT - GAP);
+  G.P.starters.forEach((c, k) => { pos.set(c.id, { x: off + k * SLOT, y: rowTop(0) }); });
+  const left = Math.max(4, Math.round(base / 2 - GW / 2));
   const xn = [];
   G.crosses.forEach((cr, i) => {
-    const pa = pos.get(cr.a), pb = pos.get(cr.b);
-    const g = Math.max(gen.get(cr.a), gen.get(cr.b)) + 1;
-    let left = Math.max(4, (pa.x + pb.x) / 2 + CW / 2 - GW / 2);
-    const taken = (rows[g] || []).slice().sort((u, v) => u[0] - v[0]);
-    for (const [l, r] of taken) if (left < r + GAP && left + GW + GAP > l) left = r + GAP;
-    occupy(g, left, left + GW);
-    cr.kids.forEach((k, n) => { pos.set(k, { x: left + n * SLOT, y: rowTop(g) }); gen.set(k, g); });
+    const g = i + 1;
+    cr.kids.forEach((k, n) => { pos.set(k, { x: left + n * SLOT, y: rowTop(g) }); });
     const xt = lab(cr.a) + ' × ' + lab(cr.b);
     const w = Math.ceil(22 + xt.length * 7.4);
     xn.push({ id: 'x' + i, i, cx: left + GW / 2, cy: rowTop(g) - BAND / 2, w, text: xt });

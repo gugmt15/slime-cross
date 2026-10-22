@@ -2266,7 +2266,7 @@ const CAMP = [
   { id: 8, V: VARIANTS.transparente, mods: {}, lesson: ['trans'], sample: { cor: 'transparente', chifre: true, olhos: 2 }, cover: { tint: '#2f5a63', items: [{ s: { cor: 'transparente', chifre: true, olhos: 2 }, h: 48 }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
   { id: 9, V: VARIANTS.mistura, mods: {}, sample: { cor: 'roxo', chifre: false, olhos: 1 }, cover: { tint: 'rgba(200, 236, 244, 0.45)', items: [{ s: { cor: 'roxo', chifre: false, olhos: 1 }, h: 48 }] }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
   { id: 10, V: VARIANTS.asasdif, mods: {}, sample: { cor: 'vermelho', chifre: true, olhos: 2, asas: true }, cover: { tint: '#3a5a3a', items: [{ s: { cor: 'vermelho', chifre: true, olhos: 2, asas: true }, h: 40 }] }, phases: [PHASE(8), PHASE(8), PHASE(6, { threat: true, ev: 'asas', intro: 'vento' })] },
-  { id: 12, secret: true, V: SECRET, mods: { threat: true, two: true, needAll: true }, sample: { cor: 'transparente', chifre: true, olhos: 1, asas: true }, cover: { tint: '#5c2f5c', scatter: true, items: [{ s: { cor: 'roxo', chifre: true, olhos: 1, asas: true, happy: true }, h: 30, x: 14, y: 17, r: -8 }, { s: { cor: 'transparente', chifre: false, olhos: 2, surpreso: true }, h: 20, x: 46, y: 36, r: 12 }, { b: 'olhos', h: 18, x: 2, y: 1, r: -18 }, { b: 'chifre', h: 17, x: 52, y: 3, r: 14 }, { b: 'azul', h: 18, x: 0, y: 42, r: 20 }, { b: 'asas', h: 16, x: 50, y: 22, r: -10 }] }, phases: [PHASE(8), PHASE(8), PHASE(7)] },
+  { id: 12, secret: true, V: SECRET, mods: { threat: true, two: true, needAll: true }, sample: { cor: 'transparente', chifre: true, olhos: 1, asas: true }, cover: { tint: '#5c2f5c', scatter: true, items: [{ t: '2×', x: 2, y: 2, r: -12 }, { b: 'olhos', h: 14, x: 26, y: 0, r: -18 }, { t: '?', x: 58, y: 2, r: 10 }, { b: 'asas', h: 12, x: 60, y: 27, r: -10 }, { b: 'chifre', h: 15, x: 1, y: 43, r: 15 }, { b: 'azul', h: 13, x: 29, y: 46, r: 8 }, { s: { cor: 'transparente', chifre: false, olhos: 2, surpreso: true }, h: 16, x: 51, y: 42, r: 12 }, { s: { cor: 'roxo', chifre: true, olhos: 1, asas: true, happy: true }, h: 28, x: 15, y: 16, r: 0 }] }, phases: [PHASE(8), PHASE(8), PHASE(7)] },
   { id: 11, V: VARIANTS.asasdif, mods: { threat: true, two: true }, sample: { cor: 'azul', chifre: false, olhos: 1, asas: true }, cover: { tint: '#333344', grid: true, items: [{ b: 'olhos', h: 24 }, { b: 'chifre', h: 24 }, { b: 'azul', h: 24 }, { b: 'asas', h: 24 }] }, phases: [PHASE(8), PHASE(8), PHASE(6)] },
 ];
 const CAMP_KEY = 'slime-camp';
@@ -2405,6 +2405,7 @@ function renderCamp() {
     C0.items.forEach((x, i) => {
       const it = document.createElement('span'); it.className = 'it';
       if (C0.scatter) { it.style.left = x.x + 'px'; it.style.top = x.y + 'px'; it.style.transform = 'rotate(' + x.r + 'deg)'; }
+      if (x.t) { const t = document.createElement('i'); t.textContent = x.t; t.style.position = 'static'; it.append(t); cv.append(it); return; }
       const c = x.b ? bichoCv(x.b) : slimeCv(x.s);
       if (!x.b) { c.className = 'sprite'; if (!x.s.morto) ownBob(c, 'camp:' + L.id + ':' + i); else c.style.animation = 'none'; }
       c.style.height = x.h + 'px';

@@ -649,15 +649,6 @@ img { max-width: 100%; }
 
 </div>
 
-<dialog class="help lesson" id="lesson" aria-labelledby="lesson-title">
-  <div class="help-head">
-    <h2 id="lesson-title"></h2>
-    <button class="btn ghost help-x" id="lesson-x" type="button" data-i18n-aria="close">×</button>
-  </div>
-  <div id="lesson-body"></div>
-  <button class="btn primary" id="lesson-ok" type="button" data-i18n="lesson_ok"></button>
-</dialog>
-
 <dialog class="help" id="help" aria-labelledby="help-title">
   <div class="help-head">
     <h2 id="help-title" data-i18n="howto_sum"></h2>
@@ -687,6 +678,15 @@ img { max-width: 100%; }
   </div>
 </div>
 </div>
+
+<dialog class="help lesson" id="lesson" aria-labelledby="lesson-title">
+  <div class="help-head">
+    <h2 id="lesson-title"></h2>
+    <button class="btn ghost help-x" id="lesson-x" type="button" data-i18n-aria="close">×</button>
+  </div>
+  <div id="lesson-body"></div>
+  <button class="btn primary" id="lesson-ok" type="button" data-i18n="lesson_ok"></button>
+</dialog>
 
 <script>
 /* ---------- idiomas ---------- */
@@ -2225,7 +2225,8 @@ function startTrain(vid) {
   /* versão com lista pronta: sorteia um desafio dela (com modo especial ligado, usa o gerador) */
   const listed = V.list && !mods.aging && !mods.threat && !mods.hard ? LIST4[Math.floor(Math.random() * LIST4.length)] : null;
   newGame('train', V, 'treino-' + Math.floor(Math.random() * 1e9), null, null, mods, listed);
-  maybeLesson(V);
+  /* abre depois que a tela do jogo aparece: o Safari não mostra janela aberta dentro de tela escondida */
+  setTimeout(() => maybeLesson(V), 50);
 }
 
 function fillVariantSelect() {

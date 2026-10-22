@@ -2249,10 +2249,8 @@ function campData() { return load(CAMP_KEY) || { s: {} }; }
 function campStarsOf(ch, ph) { return campData().s[ch + '-' + ph] || 0; }
 function campTotal() { const s = campData().s; return Object.keys(s).reduce((a, k) => a + s[k], 0); }
 /* dentro do capítulo, as fases abrem em ordem: a próxima depois de terminar a anterior */
-function campPhaseOpen(ch, ph) { return !IS_LIVE || (campUnlocked(ch) && (ph === 1 || campStarsOf(ch, ph - 1) > 0)); }
-/* nos endereços de teste tudo fica aberto e a abertura do capítulo aparece sempre na fase 1, pra dar pra rever */
-function campUnlocked(ch) {
-  if (!IS_LIVE) return true; return ch === 0 || campCh(ch - 1).phases.every((_, i) => campStarsOf(ch - 1, i + 1) > 0); }
+function campPhaseOpen(ch, ph) { return campUnlocked(ch) && (ph === 1 || campStarsOf(ch, ph - 1) > 0); }
+function campUnlocked(ch) { return ch === 0 || campCh(ch - 1).phases.every((_, i) => campStarsOf(ch - 1, i + 1) > 0); }
 function campStars() { const over = G.crosses.length - G.P.par; return over <= 0 ? 3 : over === 1 ? 2 : 1; }
 function campRecord() {
   const dt = campData(), k = G.info.ch + '-' + G.info.ph, st = campStars();
@@ -2296,10 +2294,9 @@ function startCamp(ch, ph) {
   show('game');
   setTimeout(() => campIntro(L), 50);
 }
-/* a abertura do capítulo, na primeira vez: desenho e duas frases, como as lições do roxo e do transparente */
+/* a abertura do capítulo aparece sempre que se entra na fase 1: desenho e duas frases, como as lições do roxo e do transparente */
 function campIntro(L) {
-  const flag = 'slime-camp-intro2-' + L.id; /* intro2: as aberturas voltaram a aparecer em 2026-10-23, depois da reordenação dos capítulos */
-  if (load(flag) && (IS_LIVE || G.info.ph !== 1)) return;
+  if (G.info.ph !== 1) return;
   const sl = (cor, extra, ...g) => ({ p: Object.assign({ cor, chifre: true, olhos: 2 }, extra || {}), g });
   const body = [];
   const par = k => { const e = document.createElement('p'); e.append(...withTags(tr(k))); return e; };
@@ -2326,7 +2323,7 @@ function campIntro(L) {
   }
   $('lesson-title').textContent = L.id + '. ' + tr('ch_' + L.id);
   $('lesson-body').replaceChildren(...body);
-  lessonTodo = []; lessonAfter = () => store(flag, true);
+  lessonTodo = []; lessonAfter = null;
   const dl = $('lesson'); if (dl.showModal) dl.showModal(); else dl.setAttribute('open', '');
 }
 function renderCamp() {

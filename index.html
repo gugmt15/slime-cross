@@ -1502,7 +1502,6 @@ function render() {
   $('help-mode').hidden = G.mode !== 'daily';
   $('btn-reset').hidden = G.mode === 'daily' && IS_LIVE;
   $('btn-hard').hidden = G.mode !== 'daily';
-  $('btn-giveup').hidden = G.mode === 'camp'; /* na campanha não se vê a resposta: a fase se repete até as três estrelas */
   $('modehelp').hidden = G.mode !== 'daily';
   $('btn-hard').setAttribute('aria-pressed', G.V === HARD ? 'true' : 'false');
   $('btn-hard').classList.toggle('locked', G.crosses.length > 0 || G.status !== 'playing' || !!G.replay);
@@ -1898,7 +1897,7 @@ function renderToast() {
 function renderBar() {
   renderNoteBar();
   const btn = $('btn-cross'), msg = $('msg');
-  $('btn-giveup').hidden = G.status !== 'playing' || !!G.autoplay;
+  $('btn-giveup').hidden = G.status !== 'playing' || !!G.autoplay || G.mode === 'camp'; /* na campanha não se vê a resposta: a fase se repete até as três estrelas */
   const dph = deathPhase();
   if (dph && dph !== 'done') { btn.disabled = true; btn.textContent = tr('cross'); msg.textContent = dph === 'wait' ? tr('m_hatch') : ''; return; }
   if (G.autoplay && G.status === 'playing') { btn.disabled = true; btn.textContent = tr('cross'); msg.textContent = tr('m_auto', { a: Math.max(1, G.autoStep), b: G.P.path.length }); return; }

@@ -1425,15 +1425,16 @@ function render() {
     $('view-game').querySelector('.gh-title').textContent = tr('title');
   } else {
     $('sub').textContent = tr('sub_train', { nome: vname(V) });
-    $('view-game').querySelector('.gh-title').textContent = tr('train_t');
-    $('sub').textContent = vname(V);
+    /* fora do desafio do dia o título é o nome da versão, e embaixo os modos especiais ligados */
+    $('view-game').querySelector('.gh-title').textContent = vname(V);
+    $('sub').textContent = ['aging', 'threat', 'hard'].filter(k => G.mods[k]).map(k => tr('ms_' + k)).join(' · ');
     $('target-eyebrow').textContent = tr('target');
   }
   $('trainbar').hidden = true; /* a escolha de versão e de modo especial mora na tela de Outros modos */
   $('btn-new-top').hidden = G.mode !== 'train';
-  $('btn-modes').hidden = G.mode !== 'train';
+  $('btn-modes').hidden = true; /* no treino, a setinha volta pra Outros modos */
   $('btn-home').textContent = '←';
-  $('btn-home').setAttribute('aria-label', tr(G.mode === 'arch' ? 'arch_back' : 'home_btn'));
+  $('btn-home').setAttribute('aria-label', G.mode === 'arch' ? tr('arch_back') : G.mode === 'train' ? tr('more') : tr('home_btn'));
   $('btn-hard').textContent = tr('hard_short'); $('btn-hard').title = tr('hard_help');
   $('btn-easy').textContent = '✎'; $('btn-easy').title = tr('easy'); $('btn-easy').setAttribute('aria-label', tr('easy'));
   if (!resetArmed) $('btn-reset').textContent = '↺';
@@ -2492,7 +2493,7 @@ $('modes-home').addEventListener('click', () => show('home'));
 $('btn-modes').addEventListener('click', () => show('modes'));
 $('arch-n').addEventListener('click', () => { archHard = false; renderArch(); });
 $('arch-h').addEventListener('click', () => { archHard = true; renderArch(); });
-$('btn-home').addEventListener('click', () => show(G && G.mode === 'arch' ? 'arch' : 'home'));
+$('btn-home').addEventListener('click', () => show(G && G.mode === 'arch' ? 'arch' : G && G.mode === 'train' ? 'modes' : 'home'));
 $('tut-home').addEventListener('click', () => show('home'));
 $('btn-tut-again').addEventListener('click', () => { closeHelp(); startTutorial(); show('tut'); });
 /* Instruções numa janela que abre no "?" do topo, pra a tela do jogo ficar só com o jogo */

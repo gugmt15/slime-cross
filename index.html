@@ -348,7 +348,8 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 .bigbtn small { font-family: var(--font-body); font-size: 0.85rem; font-weight: 400; color: var(--muted); }
 .bigbtn.primary { background: var(--accent); border-color: var(--ink); color: var(--accent-ink); }
 .bigbtn.primary small { color: var(--accent-ink); opacity: 0.85; }
-.bigbtn.ghost { box-shadow: none; border-style: dashed; font-size: 1.1rem; }
+/* secundários: mesma borda cheia dos outros (tracejado é "fechado" na campanha), só a letra menor */
+.bigbtn.ghost { font-size: 1.1rem; }
 .bigbtn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 .badge { position: absolute; top: -2px; right: 12px; font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; background: var(--danger); color: #ffffff; padding: 1px 8px; border-radius: 99px; }
 .btn.ghost { border-color: transparent; background: transparent; padding-inline: 4px; }

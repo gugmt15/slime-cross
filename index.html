@@ -1500,7 +1500,7 @@ function render() {
   $('btn-reset').title = tr('reset'); $('btn-reset').setAttribute('aria-label', tr('reset'));
   $('btn-modes').textContent = tr('modes_short'); $('btn-new-top').textContent = tr('new_short');
   $('help-mode').hidden = G.mode !== 'daily';
-  $('btn-reset').hidden = G.mode === 'daily' && IS_LIVE;
+  $('btn-reset').hidden = (G.mode === 'daily' || G.mode === 'arch') && IS_LIVE; /* dia anterior é o desafio daquele dia: uma tentativa, como o original */
   $('btn-hard').hidden = G.mode !== 'daily';
   $('modehelp').hidden = G.mode !== 'daily';
   $('btn-hard').setAttribute('aria-pressed', G.V === HARD ? 'true' : 'false');

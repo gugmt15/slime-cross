@@ -24,11 +24,12 @@ def candidate(rng, key):
             continue
         if not all(any(p[i] == t[i] for p in ps) for i in range(n)):  # justo: todo traço do alvo aparece em algum inicial
             continue
-        if t[3] != 0:  # o alvo pede asa
+        work = rng.randrange(n)  # o gene que dá trabalho, sorteado (até 2026-10-23 era sempre a asa): o alvo pede o recessivo dele
+        if t[work] != 0:
             continue
-        score = [sum(p[i] == t[i] for i in range(3)) for p in ps]
+        score = [sum(p[i] == t[i] for i in range(n) if i != work) for p in ps]
         top = max(score)
-        if any(score[k] == top and ps[k][3] == 0 for k in range(3)):  # a asa não está no inicial mais parecido
+        if any(score[k] == top and ps[k][work] == 0 for k in range(3)):  # esse recessivo não está no inicial mais parecido
             continue
         if n - max(sum(p[i] == t[i] for i in range(n)) for p in ps) < 2:  # o mais parecido erra pelo menos 2 traços
             continue

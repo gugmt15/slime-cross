@@ -2076,6 +2076,7 @@ function renderArch() {
     let P = archListed(n, archHard) ? puzzleFromList(V, archListed(n, archHard)) : null;
     if (!P) P = makePuzzle(V, D.key, NO_MODS);
     if (P) drawSlime(cv, P.target);
+    ownBob(cv, 'arq:' + D.key);
     const t = document.createElement('b'); t.textContent = tr('nth_day', { n });
     const sm = document.createElement('small'); sm.textContent = tr('days')[D.dow].slice(0, 3) + ' · ' + tr('arch_date', { d: D.d, m: D.m });
     const so = document.createElement('span'); so.className = 'st ' + st.k;
@@ -2096,6 +2097,12 @@ const MODE_SAMPLE = {
   transparente: { cor: 'transparente', chifre: true, olhos: 2 },
   mistura: { cor: 'roxo', chifre: false, olhos: 1 },
 };
+/* balanço com ritmo e fase próprios de cada um, como na árvore, pra os cartões não balançarem juntos */
+function ownBob(cv, key) {
+  const ph = hashStr(key), dur = 1.2 + (ph % 7) * 0.07;
+  cv.style.animationDuration = dur.toFixed(2) + 's';
+  cv.style.animationDelay = (-((ph >>> 3) % 97) / 97 * dur).toFixed(2) + 's';
+}
 function slimeCv(p) { const c = document.createElement('canvas'); c.width = 16; c.height = 16; drawSlime(c, p); return c; }
 function renderModes() {
   const chips = [['aging', () => slimeCv({ cor: 'azul', chifre: true, olhos: 2 }), '2×'],
@@ -2122,7 +2129,7 @@ function renderModes() {
   $('mode-chips').replaceChildren(...chips);
   $('mode-cards').replaceChildren(...Object.values(VARIANTS).map(V => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'mode-card';
-    const cv = slimeCv(MODE_SAMPLE[V.id]); cv.className = 'sprite';
+    const cv = slimeCv(MODE_SAMPLE[V.id]); cv.className = 'sprite'; ownBob(cv, 'modo:' + V.id);
     const nb = document.createElement('b'); nb.textContent = vname(V);
     const ds = document.createElement('small'); ds.textContent = tr('d_' + V.id);
     b.append(cv, nb, ds);

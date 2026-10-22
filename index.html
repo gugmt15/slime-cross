@@ -231,6 +231,8 @@ h2 small { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted)
 .slime.fresh.near { animation: pop 650ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both, nearflash 0.9s ease-in-out 1; }
 @keyframes nearflash { 0%, 100% { box-shadow: 0 0 0 2px var(--near); } 50% { box-shadow: 0 0 0 3px var(--near), 0 0 16px 4px var(--near); } }
 @media (prefers-reduced-motion: reduce) { .slime.fresh.near { animation: none; } }
+/* pai que também está a um traço do alvo: fica a borda amarela, e o brilho verde dos pais vem por fora */
+.slime.near.parent, .slime.fresh.near.parent { border-color: var(--near); box-shadow: 0 0 0 2px var(--near), 0 0 0 5px var(--accent), 0 0 16px 6px color-mix(in srgb, var(--accent) 60%, transparent); animation-name: none; }
 /* balão de "!" que sai do cartão do filhote quase certo, junto com o susto, e some */
 .balao { position: absolute; top: -30px; left: 50%; background: #ffffff; color: #1a1c2c; border: 2px solid #1a1c2c; border-radius: 8px; font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; line-height: 1; padding: 3px 9px 4px; pointer-events: none; opacity: 0; animation: balao 1.3s ease-out both; z-index: 3; }
 .balao::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 8px; height: 8px; background: #ffffff; border-right: 2px solid #1a1c2c; border-bottom: 2px solid #1a1c2c; transform: translateX(-50%) rotate(45deg); }

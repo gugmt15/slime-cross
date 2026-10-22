@@ -928,12 +928,14 @@ function phenOf(V, g) {
   const has = i => (g[i][0] | g[i][1]);
   let cor = V.inc ? ['azul', 'roxo', 'vermelho'][g[0][0] + g[0][1]] : (has(0) ? 'vermelho' : 'azul');
   if (V.trans && !has(V.genes.indexOf('T'))) cor = 'transparente';
-  const p = { cor, chifre: V.one ? true : !!has(1), olhos: V.two || V.one || has(2) ? 2 : 1 };
+  const p = { cor, chifre: V.one ? false : !!has(1), /* só a cor: sem chifre, que só entra no capítulo 1 */ olhos: V.two || V.one || has(2) ? 2 : 1 };
   if (V.wings) p.asas = !has(V.genes.indexOf('A'));
   return p;
 }
 function hits(V, p, t) { let n = 0; V.keys.forEach(k => { if (p[k] === t[k]) n++; }); return n; }
 function match(V, p, t) { return hits(V, p, t) === V.keys.length; }
+/* a um traço do alvo (borda amarela); com um gene só, todo errado estaria a um traço, então não marca */
+function isNear(V, p, t) { return V.keys.length > 1 && hits(V, p, t) === V.keys.length - 1; }
 function killedBy(E, p) { return !!E && p[E.k] === E.v; }
 function pairKey(a, b) { return a.id < b.id ? a.id + '|' + b.id : b.id + '|' + a.id; }
 
@@ -1594,10 +1596,10 @@ function makeCard(c) {
   const tired = G.mods.aging && u >= AGE_LIMIT;
   if (fresh.has(c.id)) {
     const d = KID_START + birthIdx(c) * KID_GAP;
-    const winner = match(V, c.p, t), near = !winner && hits(V, c.p, t) === V.keys.length - 1;
+    const winner = match(V, c.p, t), near = !winner && isNear(V, c.p, t);
     b.style.animationDelay = winner || near ? d + 's, ' + (d + 0.55) + 's' : d + 's';
   }
-  b.className = 'slime' + (fresh.has(c.id) ? ' fresh' : '') + (match(V, c.p, t) ? ' hit' : '') + (c.parents && !dead && !match(V, c.p, t) && hits(V, c.p, t) === V.keys.length - 1 ? ' near' : '') + (dead ? ' dead' : tired ? ' tired' : '') + (G.focus === c.id ? ' focus' : '');
+  b.className = 'slime' + (fresh.has(c.id) ? ' fresh' : '') + (match(V, c.p, t) ? ' hit' : '') + (c.parents && !dead && !match(V, c.p, t) && isNear(V, c.p, t) ? ' near' : '') + (dead ? ' dead' : tired ? ' tired' : '') + (G.focus === c.id ? ' focus' : '');
   const fc = G.focus && C(G.focus);
   if (fc && fc.parents && fc.parents.includes(c.id)) b.classList.add('parent');
   if (fresh.has(c.id) && match(V, c.p, t)) b.classList.add('winner');
@@ -1623,7 +1625,7 @@ function makeCard(c) {
   const ph = hashStr(c.id), dur = 1.2 + (ph % 7) * 0.07, phase = -((ph >>> 3) % 97) / 97 * dur;
   if (!(fresh.has(c.id) && isWin)) { sp.style.animationDuration = (isSad && !fresh.has(c.id) ? dur * 1.8 : dur).toFixed(2) + 's'; sp.style.animationDelay = phase.toFixed(2) + 's'; }
   /* filhote que nasce a um traço do alvo leva um susto: pula com cara de surpresa e depois volta ao normal */
-  if (fresh.has(c.id) && c.parents && !isWin && hits(V, c.p, t) === V.keys.length - 1) {
+  if (fresh.has(c.id) && c.parents && !isWin && isNear(V, c.p, t)) {
     const at = (KID_START + birthIdx(c) * KID_GAP + KID_GROW) * 1000;
     const balao = document.createElement('span'); balao.className = 'balao'; balao.textContent = '!'; balao.setAttribute('aria-hidden', 'true');
     balao.style.animationDelay = (at / 1000) + 's';
@@ -1915,7 +1917,7 @@ function renderBar() {
 
 function shareText() {
   const V = G.V, total = V.keys.length;
-  const sq = id => { const h = hits(V, C(id).p, G.P.target); return h === total ? '🟩' : h === total - 1 ? '🟨' : '⬜'; };
+  const sq = id => { const h = hits(V, C(id).p, G.P.target); return h === total ? '🟩' : total > 1 && h === total - 1 ? '🟨' : '⬜'; };
   const extras = [G.mods.hard ? tr('x_hard') : '', G.mods.aging ? tr('x_aging') : '', G.mods.threat ? tr('x_threat') : '', EASY ? tr('x_easy') : ''].filter(Boolean);
   if (G.mode === 'camp') return tr('sh_camp', { ch: G.info.ch, ph: G.info.ph, s: starStr(G.status === 'won' ? campStars() : 0) }) + ' ' + (G.status === 'won' ? G.crosses.length : 'X') + '/' + V.max + '\n' + G.crosses.map(c => c.kids.map(sq).join('')).join('\n') + '\n' + GAME_URL;
   const head = (G.mode === 'daily' || G.mode === 'arch' ? tr('sh_daily', { n: G.info.n, nome: vname(V) }) : tr('sh_train', { nome: vname(V) })) + ' ' + (G.status === 'won' ? G.crosses.length : 'X') + '/' + V.max + (extras.length ? ' · ' + extras.join(', ') : '');
@@ -2222,7 +2224,7 @@ function renderArch() {
    (o capítulo de 1 gene que existiu em 2026-10-23 era sorte de par, e saiu). */
 const PHASE = (max, extra) => Object.assign({ max }, extra || {});
 const CAMP = [
-  { id: 0, V: ONE, mods: { hard: true, carriers: true, minPar: 1, maxPar: 1 }, sample: { cor: 'azul', chifre: true, olhos: 2 }, phases: [PHASE(8)] },
+  { id: 0, V: ONE, mods: { hard: true, carriers: true, minPar: 1, maxPar: 1 }, sample: { cor: 'azul', chifre: false, olhos: 2 }, phases: [PHASE(8)] },
   /* com dois genes só existe um desafio de mínimo 3 (alvo azul sem chifre): ele é a prova, e as duas fases antes são de mínimo 2 */
   { id: 1, V: VARIANTS.dois, mods: {}, sample: { cor: 'azul', chifre: false, olhos: 2 }, phases: [PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'azul', chifre: true } }), PHASE(8, { minPar: 2, maxPar: 2, want: { cor: 'vermelho', chifre: false } }), PHASE(5)] },
   { id: 2, V: VARIANTS.classico, mods: {}, sample: { cor: 'vermelho', chifre: true, olhos: 1 }, phases: [PHASE(8), PHASE(8), PHASE(5)] },
@@ -2298,7 +2300,7 @@ function campIntro(L) {
   });
   else {
     const rows = {
-      0: [lessonRow([sl('vermelho', null, 'Vv'), '×', sl('vermelho', null, 'Vv'), '→', sl('vermelho', null, 'VV'), sl('vermelho', null, 'Vv'), sl('vermelho', null, 'Vv'), sl('azul', null, 'vv')])],
+      0: [lessonRow([sl('vermelho', { chifre: false }, 'Vv'), '×', sl('vermelho', { chifre: false }, 'Vv'), '→', sl('vermelho', { chifre: false }, 'VV'), sl('vermelho', { chifre: false }, 'Vv'), sl('vermelho', { chifre: false }, 'Vv'), sl('azul', { chifre: false }, 'vv')])],
       1: [lessonRow([sl('vermelho', { chifre: false }, 'VV', 'cc'), '×', sl('azul', null, 'vv', 'CC'), '→', sl('vermelho', null, 'Vv', 'Cc')])],
       2: [lessonRow([sl('vermelho', null, 'EE'), '×', sl('vermelho', { olhos: 1 }, 'ee'), '→', sl('vermelho', null, 'Ee')])],
       3: [lessonRow([sl('azul', null, '2×'), sl('vermelho', null, '2×'), sl('vermelho', { olhos: 1 }, '2×')])],

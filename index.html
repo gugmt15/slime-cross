@@ -492,6 +492,8 @@ footer { font-size: 0.8rem; color: var(--muted); padding-bottom: 16px; max-width
 #view-game .gamehead { flex-wrap: nowrap; align-items: center; gap: 6px; }
 #view-game .gamehead .tools { flex: none; order: 2; gap: 6px; flex-wrap: nowrap; }
 #view-game .gamehead .topright { order: 3; gap: 6px; }
+#view-game .gh-mid { cursor: pointer; }
+#view-game .gh-mid:hover .gh-title { text-decoration: underline; text-underline-offset: 3px; }
 #view-game .gh-title { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #view-game .sub { margin-top: 2px; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #view-game .gamehead .btn { padding: 5px 9px; font-size: 0.82rem; white-space: nowrap; }
@@ -2493,7 +2495,13 @@ $('modes-home').addEventListener('click', () => show('home'));
 $('btn-modes').addEventListener('click', () => show('modes'));
 $('arch-n').addEventListener('click', () => { archHard = false; renderArch(); });
 $('arch-h').addEventListener('click', () => { archHard = true; renderArch(); });
-$('btn-home').addEventListener('click', () => show(G && G.mode === 'arch' ? 'arch' : G && G.mode === 'train' ? 'modes' : 'home'));
+const goBack = () => show(G && G.mode === 'arch' ? 'arch' : G && G.mode === 'train' ? 'modes' : 'home');
+$('btn-home').addEventListener('click', goBack);
+/* o título do jogo volta junto com a setinha, como o "← Início" das outras telas */
+const ghMid = $('view-game').querySelector('.gh-mid');
+ghMid.setAttribute('role', 'button'); ghMid.tabIndex = 0;
+ghMid.addEventListener('click', goBack);
+ghMid.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goBack(); } });
 $('tut-home').addEventListener('click', () => show('home'));
 $('btn-tut-again').addEventListener('click', () => { closeHelp(); startTutorial(); show('tut'); });
 /* Instruções numa janela que abre no "?" do topo, pra a tela do jogo ficar só com o jogo */

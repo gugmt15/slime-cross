@@ -3,8 +3,10 @@
 Mesmo desafio de quatro genes do gen4.py, mais duas ameaças: depois do 2º e do 4º
 cruzamento morrem todos os slimes que mostram um traço recessivo do alvo (a ventania
 leva os de asa, o lobo come os sem chifre, o gavião leva os de um olho, o sol derrete
-os azuis). Quem só esconde o traço escapa. O alvo tem asa e pelo menos mais um traço
-recessivo, e as duas ameaças miram dois traços diferentes dele.
+os azuis). Quem só esconde o traço escapa. O alvo tem pelo menos dois traços recessivos,
+e as duas ameaças miram dois traços diferentes dele. Um gene sorteado faz o papel que era
+sempre da asa: o alvo mostra o recessivo dele, e o inicial mais parecido com o alvo não
+(antes de 2026-10-23 era sempre a asa, e todo alvo do difícil tinha asa).
 O solucionador e os jogadores simulados respeitam as ameaças; o jogador intuitivo não
 se prepara pra elas (gente de verdade lê o aviso), então o filtro é um pouco mais duro
 do que o jogador real vai sentir.
@@ -72,14 +74,15 @@ def candidate(rng, key):
             continue
         if not all(any(p[i] == t[i] for p in ps) for i in range(n)):  # justo
             continue
-        if t[3] != 0:  # o alvo pede asa
+        work = rng.randrange(n)  # o gene que dá trabalho: o alvo pede o recessivo dele
+        if t[work] != 0:
             continue
         rec = [i for i in range(n) if t[i] == 0]
         if len(rec) < 2:  # duas ameaças, dois traços do alvo
             continue
-        score = [sum(p[i] == t[i] for i in range(3)) for p in ps]
+        score = [sum(p[i] == t[i] for i in range(n) if i != work) for p in ps]
         top = max(score)
-        if any(score[k] == top and ps[k][3] == 0 for k in range(3)):
+        if any(score[k] == top and ps[k][work] == 0 for k in range(3)):  # o recessivo não está no inicial mais parecido
             continue
         if n - max(sum(p[i] == t[i] for i in range(n)) for p in ps) < 2:
             continue

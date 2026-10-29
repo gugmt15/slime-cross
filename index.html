@@ -313,10 +313,9 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 .bar-actions { flex: 1 1 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .pip { width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 3px; }
 .pip.used { background: var(--ink); }
-/* campanha: a estrelinha em cima do quadradinho do mínimo, até onde ainda dá três estrelas */
-.pips.par { padding-top: 14px; }
-.pips.par.threats { padding-top: 22px; }
-.pip .par { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; line-height: 1; color: var(--near); pointer-events: none; }
+/* campanha: a estrelinha embaixo do quadradinho do mínimo, até onde ainda dá três estrelas (em cima fica o lugar das ameaças) */
+.pips.par { padding-bottom: 12px; }
+.pip .par { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; line-height: 1; color: var(--near); pointer-events: none; }
 .msg { font-size: 0.92rem; flex: 1 1 120px; min-width: 0; }
 .notebar { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .notebar .nb-title { font-weight: 700; font-size: 0.88rem; }

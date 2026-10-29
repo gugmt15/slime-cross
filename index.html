@@ -529,7 +529,7 @@ footer { font-size: 0.8rem; color: var(--muted); padding-bottom: 16px; max-width
 .ch-art .it { position: relative; display: flex; }
 .ch-art canvas { width: auto; image-rendering: pixelated; }
 .ch-art.cover { border: 2px solid var(--ink); border-radius: 10px; position: relative; overflow: hidden; }
-.ch-art.cover .num { position: absolute; right: 4px; bottom: -8px; font-family: var(--font-display); font-size: 2rem; color: rgba(255, 255, 255, 0.2); pointer-events: none; }
+.ch-art.cover .num { position: absolute; right: 4px; bottom: -8px; font-size: 2rem; color: rgba(255, 255, 255, 0.2); pointer-events: none; }
 .ch-art.cover.grid { display: grid; grid-template-columns: 1fr 1fr; justify-items: center; align-items: center; padding: 4px 6px; }
 .ch-art.cover.scatter .it { position: absolute; }
 .ch-art .it i { position: absolute; right: -6px; top: -4px; font-style: normal; font-size: 0.75rem; font-weight: 700; background: var(--ink); color: var(--surface); border-radius: 4px; padding: 0 4px; }
@@ -1513,7 +1513,7 @@ function render() {
     $('view-game').querySelector('.gh-title').textContent = tr('title');
   } else if (G.mode === 'camp') {
     const L = campCh(G.info.ch);
-    $('view-game').querySelector('.gh-title').textContent = G.info.ch + '. ' + tr('ch_' + G.info.ch);
+    $('view-game').querySelector('.gh-title').replaceChildren(...chName(G.info.ch));
     $('sub').textContent = tr('camp_phase', { c: G.info.ch, n: G.info.ph }) + ' · ' + tr('camp_max', { n: V.max });
     $('target-eyebrow').textContent = tr('target');
   } else {
@@ -2296,6 +2296,8 @@ const campMainMax = () => CAMP.filter(L => !L.secret).reduce((a, L) => a + (L.st
 function campMainTotal() { const s = campData().s; return Object.keys(s).reduce((a, k) => a + (campCh(+k.split('-')[0]).secret ? 0 : s[k]), 0); }
 function campData() { return load(CAMP_KEY) || { s: {} }; }
 function campStarsOf(ch, ph) { return campData().s[ch + '-' + ph] || 0; }
+/* "5. O gavião" com o número em Silkscreen: no Pixelify o 5 parece um S */
+function chName(id) { const n = document.createElement('span'); n.className = 'num'; n.textContent = id + '.'; return [n, ' ' + tr('ch_' + id)]; }
 function campTotal() { const s = campData().s; return Object.keys(s).reduce((a, k) => a + s[k], 0); }
 /* dentro do capítulo, as fases abrem em ordem: a próxima depois de terminar a anterior */
 function campPhaseOpen(ch, ph) { return campUnlocked(ch) && (ph === 1 || campStarsOf(ch, ph - 1) > 0); }
@@ -2378,7 +2380,7 @@ function campIntro(L) {
     if (r.includes('p2')) body.push(par('ch_' + L.id + '_1'), ...r.map(x => (x === 'p2' ? par('ch_' + L.id + '_2') : x)));
     else body.push(par('ch_' + L.id + '_1'), ...r, par('ch_' + L.id + '_2'));
   }
-  $('lesson-title').textContent = L.id + '. ' + tr('ch_' + L.id);
+  $('lesson-title').replaceChildren(...chName(L.id));
   $('lesson-body').replaceChildren(...body);
   lessonTodo = []; lessonAfter = null;
   const dl = $('lesson'); if (dl.showModal) dl.showModal(); else dl.setAttribute('open', '');
@@ -2432,7 +2434,7 @@ function renderCamp() {
       cv.append(it);
     });
     const head = document.createElement('div'); head.className = 'ch-head';
-    const nb = document.createElement('b'); nb.textContent = L.id + '. ' + tr('ch_' + L.id);
+    const nb = document.createElement('b'); nb.replaceChildren(...chName(L.id));
     const gl = L.V.one ? vname(L.V) : tr('n_genes', { n: L.V.genes.length });
     const sm = document.createElement('small'); sm.textContent = open ? gl : '🔒 ' + gl;
     if (!open) card.title = tr('camp_locked');

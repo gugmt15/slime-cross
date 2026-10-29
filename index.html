@@ -1257,7 +1257,7 @@ function sprite(p) {
 }
 function targetName(V, p) {
   const d = descr(V, p);
-  if (LANG === 'en') return d[0][0].toUpperCase() + d[0].slice(1) + ' slime, ' + d.slice(1).join(', ');
+  if (LANG === 'en') return [d[0][0].toUpperCase() + d[0].slice(1) + ' slime', ...d.slice(1)].join(', '); /* com um gene só (capítulo 0) não sobra vírgula */
   if (LANG === 'ja') return d.join('・') + 'のスライム';
   return 'Slime ' + d.join(', ');
 }

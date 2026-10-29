@@ -1519,7 +1519,7 @@ function render() {
   } else {
     $('sub').textContent = tr('sub_train', { nome: vname(V) });
     /* fora do desafio do dia o título é o nome da versão, e embaixo os modos especiais ligados */
-    $('view-game').querySelector('.gh-title').textContent = vname(V);
+    numText($('view-game').querySelector('.gh-title'), vname(V));
     $('sub').textContent = ['aging', 'threat', 'hard'].filter(k => G.mods[k]).map(k => tr('ms_' + k)).join(' · ');
     $('target-eyebrow').textContent = tr('target');
   }
@@ -2250,7 +2250,7 @@ function renderArch() {
     if (!P) P = makePuzzle(V, D.key, NO_MODS);
     if (P) drawSlime(cv, P.target);
     ownBob(cv, 'arq:' + D.key);
-    const t = document.createElement('b'); t.textContent = tr('nth_day', { n });
+    const t = document.createElement('b'); numText(t, tr('nth_day', { n }));
     const sm = document.createElement('small'); sm.textContent = tr('days')[D.dow].slice(0, 3) + ' · ' + tr('arch_date', { d: D.d, m: D.m });
     const so = document.createElement('span'); so.className = 'st ' + st.k;
     so.textContent = st.k === 'won' ? tr('arch_won', { m: st.n }) : st.k === 'lost' ? tr('arch_lost') : st.k === 'going' ? tr('arch_going') : '';
@@ -2298,6 +2298,8 @@ function campData() { return load(CAMP_KEY) || { s: {} }; }
 function campStarsOf(ch, ph) { return campData().s[ch + '-' + ph] || 0; }
 /* "5. O gavião" com o número em Silkscreen: no Pixelify o 5 parece um S */
 function chName(id) { const n = document.createElement('span'); n.className = 'num'; n.textContent = id + '.'; return [n, ' ' + tr('ch_' + id)]; }
+/* o mesmo pros outros textos em Pixelify com número ("3 genes", "Nº 24", "0 de 100 estrelas"): os dígitos vão pro Silkscreen */
+function numText(el, s) { el.replaceChildren(...String(s).split(/(\d+)/).filter(x => x).map(x => /^\d/.test(x) ? Object.assign(document.createElement('span'), { className: 'num', textContent: x }) : x)); }
 function campTotal() { const s = campData().s; return Object.keys(s).reduce((a, k) => a + s[k], 0); }
 /* dentro do capítulo, as fases abrem em ordem: a próxima depois de terminar a anterior */
 function campPhaseOpen(ch, ph) { return campUnlocked(ch) && (ph === 1 || campStarsOf(ch, ph - 1) > 0); }
@@ -2412,7 +2414,7 @@ function phaseIntro(k) {
   const dl = $('lesson'); if (dl.showModal) dl.showModal(); else dl.setAttribute('open', '');
 }
 function renderCamp() {
-  $('camp-total').textContent = tr('camp_total', { n: campTotal(), t: campMax() });
+  numText($('camp-total'), tr('camp_total', { n: campTotal(), t: campMax() }));
   $('camp-list').replaceChildren(...CAMP.slice().sort((a, b) => a.id - b.id).filter(L => !L.secret || campUnlocked(L.id)).map(L => {
     const open = campUnlocked(L.id);
     const card = document.createElement('div'); card.className = 'ch-card' + (open ? '' : ' locked');
@@ -2550,7 +2552,7 @@ function renderModes() {
   $('mode-cards').replaceChildren(...Object.values(VARIANTS).map(V => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'mode-card';
     const cv = slimeCv(MODE_SAMPLE[V.id]); cv.className = 'sprite'; ownBob(cv, 'modo:' + V.id);
-    const nb = document.createElement('b'); nb.textContent = vname(V);
+    const nb = document.createElement('b'); numText(nb, vname(V));
     const ds = document.createElement('small'); ds.textContent = tr('d_' + V.id);
     b.append(cv, nb, ds);
     b.addEventListener('click', () => { $('variant').value = V.id; startTrain(V.id); show('game'); });

@@ -2629,9 +2629,9 @@ $('btn-easy').addEventListener('click', () => { EASY = !EASY; store('slime-easy'
 
 let targetVisible = true;
 try {
-  /* o topo preso aparece assim que o desenho do alvo começa a sair por cima, e não só quando o quadro inteiro já saiu
+  /* o topo preso aparece quando metade do desenho do alvo já saiu por cima, e não só quando o quadro inteiro já saiu
      (antes havia um trecho da rolagem sem alvo nenhum na tela); cortado embaixo não conta */
-  new IntersectionObserver(es => { const e = es[es.length - 1]; targetVisible = e.intersectionRatio >= 0.99 || e.boundingClientRect.top >= 0; updatePin(); }, { threshold: [0, 0.99] }).observe($('target-cv'));
+  new IntersectionObserver(es => { const e = es[es.length - 1]; targetVisible = e.intersectionRatio >= 0.5 || e.boundingClientRect.top >= 0; updatePin(); }, { threshold: [0, 0.5] }).observe($('target-cv'));
 } catch (e) { /* sem observador: o topo preso não aparece */ }
 function updatePin() { $('pinbar').hidden = targetVisible || $('view-game').hidden; }
 function show(view) {

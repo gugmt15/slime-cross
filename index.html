@@ -2501,7 +2501,8 @@ function renderCamp() {
       if (C0.scatter) { it.style.left = x.x + 'px'; it.style.top = x.y + 'px'; it.style.transform = 'rotate(' + x.r + 'deg)'; }
       if (x.t) { const t = document.createElement('i'); t.textContent = x.t; t.style.position = 'static'; it.append(t); cv.append(it); return; }
       const c = x.b ? bichoCv(x.b) : slimeCv(x.s);
-      if (!x.b) { c.className = 'sprite'; if (!x.s.morto) ownBob(c, 'camp:' + L.id + ':' + i); else c.style.animation = 'none'; }
+      /* capítulo fechado fica parado (sem pulo e sem bater asa); só se mexe depois de liberado */
+      if (!x.b) { c.className = 'sprite'; if (open && !x.s.morto) ownBob(c, 'camp:' + L.id + ':' + i); else { c.style.animation = 'none'; c._p = null; } }
       c.style.height = x.h + 'px';
       it.append(c);
       if (x.tag) { const t = document.createElement('i'); t.textContent = x.tag; it.append(t); }

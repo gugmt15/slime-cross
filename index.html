@@ -1580,7 +1580,7 @@ function render() {
   $('btn-hard').hidden = G.mode !== 'daily';
   $('modehelp').hidden = G.mode !== 'daily';
   $('btn-hard').setAttribute('aria-pressed', G.V === HARD ? 'true' : 'false');
-  $('btn-hard').classList.toggle('locked', G.crosses.length > 0 || G.status !== 'playing' || !!G.replay);
+  $('btn-hard').classList.toggle('locked', !!G.replay || !!G.autoplay);
   $('variant').value = V.id;
 
   drawSlime($('target-cv'), t);

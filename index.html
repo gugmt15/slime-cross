@@ -15,6 +15,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Slime Cross">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<script>
+/* Endereços de teste (<branch>.slime-cross.pages.dev e o computador): ícone com a fita de obra e nome "SC Dev",
+   pra não confundir com o oficial na tela do celular. */
+if (/\.slime-cross\.pages\.dev$|^localhost$|^127\./.test(location.hostname)) {
+  document.querySelector('link[rel="apple-touch-icon"]').href = '/icons/dev-apple-touch-icon.png';
+  document.querySelector('link[rel="manifest"]').href = '/manifest-dev.webmanifest';
+  document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'SC Dev';
+}
+</script>
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://slimecross.com/">
 <meta property="og:site_name" content="Slime Cross">

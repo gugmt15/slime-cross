@@ -60,6 +60,8 @@
       let old = false;
       for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('slime-') === 0) { old = true; break; } }
       localStorage.setItem('slime-origem', JSON.stringify(old ? 'antes' : window.SLIME_VIA));
+      const d = new Date(), day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      localStorage.setItem('slime-primeira', JSON.stringify(old ? 'antes' : day));
     }
     if (q.has('r')) { q.delete('r'); const rest = q.toString(); history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) { /* sem armazenamento: segue sem origem */ }
@@ -1487,6 +1489,10 @@ function doCross(aId, bId, silent) {
     else if (!pairsLeft()) { G.status = 'lost'; G.reason = 'r_nopair'; }
   }
   if (!silent) save();
+  if (!silent && !G.replay && !G.autoplay) {
+    if (G.crosses.length === 1) G.t0 = Date.now();
+    if (G.status !== 'playing') visitGame(G.status);
+  }
   if (G.mode === 'daily' && !silent && !G.replay && !G.autoplay && G.crosses.length === 1) track('start');
   if (G.mode === 'daily' && G.status !== 'playing') recordDaily();
   if (G.mode === 'camp' && G.status === 'won' && !silent && !G.replay && !G.autoplay) {
@@ -1521,6 +1527,44 @@ function track(ev, reason) {
     fetch('/api/stats', { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
   } catch (e) {}
 }
+/* Registro da visita (functions/api/visit.js, banco D1): um por página aberta, sem nada que identifique a pessoa.
+   Diz de onde veio, o que fez (telas, tutorial, partidas, compartilhar, café, ajuda), quanto tempo ficou e se deu erro.
+   Vai quando a página some da tela (trocar de aba, fechar), e de novo se ela voltar: o servidor guarda a última versão. */
+const VISIT = {
+  id: (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)),
+  t0: new Date().toISOString(), shown: 0, since: document.visibilityState === 'visible' ? Date.now() : 0,
+  views: [], tut: 0, tutDone: false, games: [], share: [], coffee: [], help: 0, err: [],
+};
+function visitView(v) { if (VISIT.views[VISIT.views.length - 1] !== v && VISIT.views.length < 40) VISIT.views.push(v); }
+function gameKey() { return G.mode === 'daily' || G.mode === 'arch' ? String(G.info.n) : G.mode === 'camp' ? G.info.ch + '-' + G.info.ph : G.V.id; }
+function visitGame(result) {
+  if (VISIT.games.length >= 40) return;
+  VISIT.games.push({ m: G.mode, h: G.V === HARD, k: gameKey(), r: result, n: G.crosses.length, p: G.P.par,
+    s: G.t0 ? Math.round((Date.now() - G.t0) / 1000) : 0, st: G.mode === 'camp' && result === 'won' ? campStars() : 0 });
+}
+function sendVisit() {
+  if (!TRACK_ON) return;
+  if (VISIT.since) { VISIT.shown += Date.now() - VISIT.since; VISIT.since = 0; }
+  const days = new Set([...Object.keys(loadStats(false).days), ...Object.keys(loadStats(true).days)]);
+  const first = load('slime-primeira');
+  const fd = /^\d{4}-\d{2}-\d{2}$/.test(first || '') ? Math.round((new Date(today().key) - new Date(first)) / 864e5) : -1;
+  const body = {
+    id: VISIT.id, t: VISIT.t0, day: today().key, test: TRACK_TEST || !!TEST_DAY,
+    via: window.SLIME_VIA || '', origem: load('slime-origem') || '', first_days: fd, played_days: days.size,
+    lang: LANG, device: window.matchMedia && matchMedia('(pointer: coarse)').matches ? 'cel' : 'pc', w: window.innerWidth,
+    secs: Math.round(VISIT.shown / 1000),
+    views: VISIT.views, tut: VISIT.tut, tutDone: VISIT.tutDone, games: VISIT.games, share: VISIT.share, coffee: VISIT.coffee, help: VISIT.help, err: VISIT.err,
+  };
+  try { navigator.sendBeacon('/api/visit', new Blob([JSON.stringify(body)], { type: 'application/json' })); } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') sendVisit(); else VISIT.since = Date.now(); });
+window.addEventListener('pagehide', () => { if (VISIT.since) sendVisit(); });
+window.addEventListener('error', e => { if (VISIT.err.length < 5) VISIT.err.push(String((e && e.message) || 'erro').slice(0, 120) + ' @' + ((e && e.lineno) || 0)); });
+/* café: de onde a pessoa clicou */
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('a[href*="ko-fi.com"]');
+  if (a && VISIT.coffee.length < 10) VISIT.coffee.push(a.closest('.home-foot') ? 'inicio' : a.closest('#end') ? 'fim' : 'sobre');
+}, true);
 function statsSummary(hard) {
   const st = loadStats(hard);
   const keys = Object.keys(st.days).sort();
@@ -2105,6 +2149,7 @@ function renderEnd() {
   const box = document.createElement('textarea'); box.className = 'sharebox'; box.id = 'share-box'; box.readOnly = true; box.value = shareText(); box.hidden = true;
   box.setAttribute('aria-label', tr('share_aria'));
   sh.addEventListener('click', () => {
+    if (VISIT.share.length < 10) VISIT.share.push(G.mode);
     const txt = G.replay ? G.replay.share : shareText();
     const fallback = () => { box.hidden = false; box.focus(); box.select(); shLabel.textContent = tr('selected'); };
     const copy = () => { try { navigator.clipboard.writeText(txt).then(() => { shLabel.textContent = tr('copied'); }, fallback); } catch (e) { fallback(); } };
@@ -2212,6 +2257,7 @@ $('btn-cross').addEventListener('click', () => {
 
 /* Ver resposta: recomeça o tabuleiro e joga sozinho a sequência mais curta, com a animação normal. */
 function showAnswer() {
+  if (!G.replay && G.status === 'playing') visitGame('gaveup');
   if (G.mode === 'daily') {
     const hard = G.V === HARD, st = loadStats(hard);
     if (!st.days[G.seedStr]) { st.days[G.seedStr] = { won: false, n: G.crosses.length }; store(statsKey(hard), st); track('end', 'gaveup'); }
@@ -2738,6 +2784,7 @@ try {
 } catch (e) { /* sem observador: o topo preso não aparece */ }
 function updatePin() { $('pinbar').hidden = targetVisible || $('view-game').hidden; }
 function show(view) {
+  visitView(view === 'game' && G ? 'game:' + G.mode : view);
   ['home', 'tut', 'game', 'sobre', 'arch', 'modes', 'camp'].forEach(v => { $('view-' + v).hidden = v !== view; });
   if (view === 'camp') renderCamp();
   if (view === 'sobre') renderSobre();
@@ -2832,6 +2879,7 @@ function startTutorial() { tutStep = 0; tutDone = false; tutAnswer = null; tutMi
 
 function renderTut() {
   const S = TSTEPS[tutStep];
+  VISIT.tut = Math.max(VISIT.tut, tutStep + 1);
   const parts = [tEl('div', 'tut-step-n', tr('step', { n: S.passo, m: TUT_TOTAL }))];
   if (S.kind === 'cross') {
     parts.push(tEl('p', 'tut-text', tr(S.text)), parentsRow(S, false));
@@ -2844,6 +2892,7 @@ function renderTut() {
         parts.push(tEl('p', 'tut-text', tr('tut_done')));
         act.append(tBtn(tr('play_daily'), true, () => { startDaily(); show('game'); }), tBtn(tr('back_home'), false, () => show('home')));
         store('slime-tut-feito', true);
+        VISIT.tutDone = true;
       }
     }
     parts.push(act);
@@ -2975,7 +3024,7 @@ ghMid.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ')
 $('tut-home').addEventListener('click', () => show('home'));
 $('btn-tut-again').addEventListener('click', () => { closeHelp(); startTutorial(); show('tut'); });
 /* Instruções numa janela que abre no "?" do topo, pra a tela do jogo ficar só com o jogo */
-function openHelp() { const d = $('help'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); }
+function openHelp() { VISIT.help++; const d = $('help'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); }
 function closeHelp() { const d = $('help'); if (d.close) d.close(); else d.removeAttribute('open'); }
 $('btn-help').addEventListener('click', openHelp);
 $('help-close').addEventListener('click', closeHelp);

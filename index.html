@@ -16,13 +16,21 @@
 <meta name="apple-mobile-web-app-title" content="Slime Cross">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <script>
-/* Endereços de teste (<branch>.slime-cross.pages.dev e o computador): ícone com a fita de obra e nome "SC Dev",
-   pra não confundir com o oficial na tela do celular. */
-if (/\.slime-cross\.pages\.dev$|^localhost$|^127\./.test(location.hostname)) {
-  document.querySelector('link[rel="apple-touch-icon"]').href = '/icons/dev-apple-touch-icon.png';
-  document.querySelector('link[rel="manifest"]').href = '/manifest-dev.webmanifest';
-  document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'SC Dev';
-}
+/* Ícone e nome do atalho na tela do celular, escolhidos na hora de instalar (depois o celular não troca sozinho):
+   fundo verde musgo no modo escuro e verde claro no modo claro; nos endereços de teste (<branch>.slime-cross.pages.dev
+   e o computador), o mesmo ícone com a fita de obra no canto e o nome "SC Dev", pra não confundir com o oficial. */
+(function () {
+  const dev = /\.slime-cross\.pages\.dev$|^localhost$|^127\./.test(location.hostname);
+  const mq = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
+  function setIcons() {
+    const pre = (dev ? 'dev-' : '') + (mq && !mq.matches ? 'light-' : '');
+    document.querySelector('link[rel="apple-touch-icon"]').href = pre ? '/icons/' + pre + 'apple-touch-icon.png' : '/apple-touch-icon.png';
+    document.querySelector('link[rel="manifest"]').href = '/manifest' + (dev ? '-dev' : '') + (pre.indexOf('light') >= 0 ? '-light' : '') + '.webmanifest';
+    if (dev) document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'SC Dev';
+  }
+  setIcons();
+  if (mq && mq.addEventListener) mq.addEventListener('change', setIcons);
+})();
 </script>
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://slimecross.com/">

@@ -1,0 +1,28 @@
+{
+  "name": "Slime Cross",
+  "short_name": "Slime Cross",
+  "description": "A daily genetics puzzle: breed slimes with hidden genes until the target hatches.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#edf1ea",
+  "theme_color": "#edf1ea",
+  "icons": [
+    {
+      "src": "/icons/light-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/light-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/light-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

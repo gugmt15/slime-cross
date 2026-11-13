@@ -45,6 +45,25 @@
   } catch (e) { /* dado estragado ou sem armazenamento: segue sem importar */ }
   history.replaceState(null, '', location.pathname + location.search);
 })();
+/* De onde a pessoa veio, pra saber qual divulgação traz gente: a etiqueta ?r= dos links que a gente posta
+   (app de celular costuma não dizer o site anterior) ou o domínio do site anterior. Só o nome do lugar, nada da pessoa.
+   A da primeira visita fica guardada; quem já jogava antes disso fica como "antes". */
+(function () {
+  try {
+    const q = new URLSearchParams(location.search);
+    const tag = (q.get('r') || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 24);
+    let host = '';
+    try { host = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, '') : ''; } catch (e) {}
+    if (/(^|\.)slimecross\.com$|slime-cross\.pages\.dev$|github\.io$/.test(host)) host = '';
+    window.SLIME_VIA = tag || host || 'direto';
+    if (localStorage.getItem('slime-origem') === null) {
+      let old = false;
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('slime-') === 0) { old = true; break; } }
+      localStorage.setItem('slime-origem', JSON.stringify(old ? 'antes' : window.SLIME_VIA));
+    }
+    if (q.has('r')) { q.delete('r'); const rest = q.toString(); history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
+  } catch (e) { /* sem armazenamento: segue sem origem */ }
+})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1497,6 +1516,7 @@ function track(ev, reason) {
       ev, date: G.seedStr, day: G.info.n, hard: G.V === HARD, test: TRACK_TEST || !!TEST_DAY,
       won: G.status === 'won', reason: reason || G.reason || '', n: G.crosses.length, par: G.P.par,
       path: G.crosses.map(c => lab(c.a) + '×' + lab(c.b)).join(' '), played: before.length, streak: S.current, lang: LANG,
+      via: window.SLIME_VIA || '', origem: load('slime-origem') || '',
     };
     fetch('/api/stats', { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
   } catch (e) {}

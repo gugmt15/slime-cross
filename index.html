@@ -2491,11 +2491,10 @@ function renderCamp() {
     const open = campUnlocked(L.id);
     const card = document.createElement('div'); card.className = 'ch-card' + (open ? '' : ' locked');
     /* a cena do capítulo: slimes e ameaças pequenos que contam o que o capítulo ensina */
-    /* capa do capítulo: fundo de cor própria, número grande atrás, e o slime ou as ameaças que resumem o capítulo */
+    /* capa do capítulo: fundo de cor própria e o slime ou as ameaças que resumem o capítulo (o número fica só no título) */
     const C0 = L.cover || { tint: 'transparent', items: [{ s: L.sample, h: 48 }] };
     const cv = document.createElement('div'); cv.className = 'ch-art cover' + (C0.grid ? ' grid' : '') + (C0.scatter ? ' scatter' : '');
     cv.style.background = C0.tint;
-    const num = document.createElement('span'); num.className = 'num'; num.textContent = L.id; cv.append(num);
     C0.items.forEach((x, i) => {
       const it = document.createElement('span'); it.className = 'it';
       if (C0.scatter) { it.style.left = x.x + 'px'; it.style.top = x.y + 'px'; it.style.transform = 'rotate(' + x.r + 'deg)'; }

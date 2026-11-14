@@ -2986,6 +2986,7 @@ function renderTut() {
       parts.push(tEl('p', 'tut-text', tr('tut_done')));
       act.append(tBtn(tr('play_daily'), true, () => { startDaily(); show('game'); }), tBtn(tr('back_home'), false, () => show('home')));
       store('slime-tut-feito', true);
+      VISIT.tutDone = true;
     }
     parts.push(act);
   }

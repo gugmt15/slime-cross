@@ -388,6 +388,11 @@ canvas.sprite { image-rendering: pixelated; image-rendering: crisp-edges; animat
 .end p { margin: 0; max-width: 65ch; }
 .end .path { margin: -4px 0 0; padding-left: 1.6em; display: flex; flex-direction: column; gap: 2px; }
 .end .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+/* na vitória, compartilhar é a ação principal: largo e sozinho na linha, como o botão do Wordle; o resto fica menor embaixo */
+.end .share-row { display: flex; }
+.btn.share.share-big { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 16px; font-size: 1.1rem; border-radius: 10px; }
+.btn.share.share-big .ico { width: 1.2em; height: 1.2em; }
+.end .actions.minor .btn { font-size: 0.82rem; padding: 5px 10px; }
 .stats { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
 .stat-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .stat { display: flex; flex-direction: column; align-items: center; text-align: center; }
@@ -2277,7 +2282,15 @@ function renderEnd() {
       coffee.append(cv, a);
     }
   }
-  end.replaceChildren(...[h, starsEl, p, pathList, pathNote, G.mode === 'daily' && !G.replay ? statsBlock() : null, nextLine, actions, box, coffee].filter(Boolean));
+  /* na vitória, depois do resultado e das estatísticas (a ordem de sempre), o Compartilhar largo e sozinho na linha, como no
+     Wordle; os outros botões ficam menores embaixo. Nas Fases a ação principal continua sendo a próxima fase. */
+  let shareRow = null;
+  if (G.status === 'won' && !G.replay && G.mode !== 'camp') {
+    sh.classList.add('share-big'); sh.remove();
+    shareRow = document.createElement('div'); shareRow.className = 'share-row'; shareRow.append(sh);
+    actions.classList.add('minor');
+  }
+  end.replaceChildren(...[h, starsEl, p, pathList, pathNote, G.mode === 'daily' && !G.replay ? statsBlock() : null, nextLine, shareRow, actions, box, coffee].filter(Boolean));
 }
 
 function toggle(id) {
@@ -3218,7 +3231,7 @@ document.querySelector('.home-title').addEventListener('click', () => {
 /* Versão publicada. O gancho de commit do repositório (pre-commit) troca esta data a cada commit que mexe no index.html
    e grava a mesma em version.txt. O app da tela de início do iPhone fica parado na memória e não recarrega sozinho:
    quando ele volta pra frente da tela, confere version.txt e recarrega se houver versão nova. */
-const BUILD = '2026-11-15 21:03';
+const BUILD = '2026-11-15 21:11';
 async function checkVersion() {
   try {
     const r = await fetch('/version.txt?t=' + Date.now(), { cache: 'no-store' });

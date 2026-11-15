@@ -2277,9 +2277,7 @@ function renderEnd() {
       coffee.append(cv, a);
     }
   }
-  /* na vitória, compartilhar vem logo depois do resultado, antes das estatísticas (como no Wordle) */
-  const won = G.status === 'won';
-  end.replaceChildren(...[h, starsEl, p, won ? actions : null, won ? box : null, pathList, pathNote, G.mode === 'daily' && !G.replay ? statsBlock() : null, nextLine, won ? null : actions, won ? null : box, coffee].filter(Boolean));
+  end.replaceChildren(...[h, starsEl, p, pathList, pathNote, G.mode === 'daily' && !G.replay ? statsBlock() : null, nextLine, actions, box, coffee].filter(Boolean));
 }
 
 function toggle(id) {
@@ -3220,7 +3218,7 @@ document.querySelector('.home-title').addEventListener('click', () => {
 /* Versão publicada. O gancho de commit do repositório (pre-commit) troca esta data a cada commit que mexe no index.html
    e grava a mesma em version.txt. O app da tela de início do iPhone fica parado na memória e não recarrega sozinho:
    quando ele volta pra frente da tela, confere version.txt e recarrega se houver versão nova. */
-const BUILD = '2026-11-15 20:49';
+const BUILD = '2026-11-15 21:03';
 async function checkVersion() {
   try {
     const r = await fetch('/version.txt?t=' + Date.now(), { cache: 'no-store' });

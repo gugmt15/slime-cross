@@ -2170,10 +2170,7 @@ function shareParts() {
 function shareText() {
   /* como o Wordle: quadrado apagado pros filhotes comuns, pra o amarelo (a um traço) e o verde (o alvo) aparecerem */
   const s = shareParts(), E = { g: '🟩', y: '🟨', k: '⬛' };
-  return s.head + ' 🧬 ' + s.score + s.tail + '
-' + s.rows.map(r => r.map(c => E[c]).join('')).join('
-') + '
-' + SHARE_URL;
+  return s.head + ' 🧬 ' + s.score + s.tail + '\n' + s.rows.map(r => r.map(c => E[c]).join('')).join('\n') + '\n' + SHARE_URL;
 }
 
 /* O resultado como imagem em pé (1080x1920, o tamanho dos Stories), pra quem quer postar no Instagram, no status do WhatsApp ou no LINE.
@@ -3297,7 +3294,7 @@ document.querySelector('.home-title').addEventListener('click', () => {
 /* Versão publicada. O gancho de commit do repositório (pre-commit) troca esta data a cada commit que mexe no index.html
    e grava a mesma em version.txt. O app da tela de início do iPhone fica parado na memória e não recarrega sozinho:
    quando ele volta pra frente da tela, confere version.txt e recarrega se houver versão nova. */
-const BUILD = '2026-11-19 22:47';
+const BUILD = '2026-11-19 22:52';
 async function checkVersion() {
   try {
     const r = await fetch('/version.txt?t=' + Date.now(), { cache: 'no-store' });
